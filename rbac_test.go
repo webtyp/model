@@ -204,6 +204,81 @@ func TestAllowedDelegates(t *testing.T) {
 	}
 }
 
+type testPolicy []RoleGrant
+
+func (p testPolicy) Grants() []RoleGrant { return p }
+
+func TestRolesFor(t *testing.T) {
+	t.Run("RolesFor: exact match", func(t *testing.T) {
+		p := testPolicy{{Role: "admin", Grant: Grant{Resource: "catalog", Actions: Read | Update}}}
+		got := RolesFor(p, "catalog", Read)
+		if len(got) != 1 || got[0] != "admin" {
+			t.Errorf("RolesFor = %v; want [admin]", got)
+		}
+	})
+
+	t.Run("RolesFor: action not granted", func(t *testing.T) {
+		p := testPolicy{{Role: "admin", Grant: Grant{Resource: "catalog", Actions: Read | Update}}}
+		got := RolesFor(p, "catalog", Delete)
+		if len(got) != 0 {
+			t.Errorf("RolesFor = %v; want empty", got)
+		}
+	})
+
+	t.Run("RolesFor: resource not granted", func(t *testing.T) {
+		p := testPolicy{{Role: "admin", Grant: Grant{Resource: "catalog", Actions: Read | Update}}}
+		got := RolesFor(p, "invoice", Read)
+		if len(got) != 0 {
+			t.Errorf("RolesFor = %v; want empty", got)
+		}
+	})
+
+	t.Run("RolesFor: two roles, one permission", func(t *testing.T) {
+		p := testPolicy{
+			{Role: "admin", Grant: Grant{Resource: "catalog", Actions: Read}},
+			{Role: "editor", Grant: Grant{Resource: "catalog", Actions: Read}},
+		}
+		got := RolesFor(p, "catalog", Read)
+		if len(got) != 2 || got[0] != "admin" || got[1] != "editor" {
+			t.Errorf("RolesFor = %v; want [admin editor] in order", got)
+		}
+	})
+
+	t.Run("RolesFor: same role twice", func(t *testing.T) {
+		p := testPolicy{
+			{Role: "admin", Grant: Grant{Resource: "catalog", Actions: Read}},
+			{Role: "admin", Grant: Grant{Resource: "catalog", Actions: Read | Update}},
+		}
+		got := RolesFor(p, "catalog", Read)
+		if len(got) != 1 || got[0] != "admin" {
+			t.Errorf("RolesFor = %v; want [admin] without repeat", got)
+		}
+	})
+
+	t.Run("RolesFor: wildcard resource", func(t *testing.T) {
+		p := testPolicy{{Role: "root", Grant: Grant{Resource: Wildcard, Actions: AllActions}}}
+		got := RolesFor(p, "anything", Create)
+		if len(got) != 1 || got[0] != "root" {
+			t.Errorf("RolesFor = %v; want [root]", got)
+		}
+	})
+
+	t.Run("RolesFor: nil describer", func(t *testing.T) {
+		got := RolesFor(nil, "catalog", Read)
+		if got != nil {
+			t.Errorf("RolesFor(nil) = %v; want nil", got)
+		}
+	})
+
+	t.Run("RolesFor: nobody holds it", func(t *testing.T) {
+		p := testPolicy{{Role: "admin", Grant: Grant{Resource: "catalog", Actions: Read}}}
+		got := RolesFor(p, "site_asset", Create)
+		if len(got) != 0 {
+			t.Errorf("RolesFor = %v; want empty — nobody holds site_asset:c", got)
+		}
+	})
+}
+
 // The number is misleading wherever a human or an agent reads it: the zero value is
 // AccessGuarded, so the most protected route serializes as `0` — which reads as "nothing
 // declared", the exact opposite of the truth. A routes endpoint that reports the security

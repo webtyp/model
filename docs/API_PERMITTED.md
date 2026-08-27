@@ -179,6 +179,28 @@ The order ensures widget-level validation runs before character-level rules.
 - **Early termination:** Stops at first validation failure.
 - **Rune counting:** Uses range iteration (single pass) without importing `unicode/utf8`.
 
+## RBAC introspection — `RoleGrant`, `PolicyDescriber`, `RolesFor`
+
+```go
+type RoleGrant struct {
+    Role  RoleCode
+    Grant Grant
+}
+
+type PolicyDescriber interface {
+    Grants() []RoleGrant
+}
+
+func RolesFor(p PolicyDescriber, r Resource, a Action) []RoleCode
+```
+
+`RoleGrant` es el par en que una política se declara y en que la introspección la lee de
+vuelta. `PolicyDescriber` lo expone quien posee el `Authorizer` cuando puede enumerar lo
+que concede. `RolesFor` es su inversa sobre un slice de grants: devuelve los roles que
+conceden `(r, a)` en el orden de declaración de la política y sin repeticiones; `nil` si
+`p == nil` ("desconocido", no "nadie"); vacío si ningún rol lo tiene — el hallazgo que
+esta API existe para reportar (ruta muerta con `403` permanente).
+
 ## See Also
 
 - [Field and Fielder API](API_FIELD.md) for how `Permitted` integrates into schema validation

@@ -343,3 +343,19 @@ tiene su combinación propia, `SafeFields` (`Fielder` + `Validator`), que no cam
 Tabla de qué nombrar en cada frontera, y detalle del codec: `docs/CODEC_AND_FIELDER.md`.
 **Regla:** un consumidor nunca declara la intersección de dos átomos de este paquete; si le
 falta un contrato en una frontera, el defecto está aquí, no en el consumidor.
+
+## 11. RBAC: `Authorizer` vs `PolicyDescriber`
+
+`Authorizer` responde la pregunta directa: *¿puede este usuario hacer (Resource, Action)?*
+Es un cierre, así que nada puede preguntarle la inversa: *¿quién puede hacer (Resource, Action)?*
+
+`PolicyDescriber` es esa inversa, y es opcional a propósito: un `Authorizer` que no puede
+describirse sigue funcionando exactamente igual; la introspección entonces reporta el permiso
+que una ruta exige sin poder decir quién lo tiene. Lo que nunca debe hacer es reportar
+"nadie" cuando simplemente no sabía — `RolesFor(nil)` devuelve `nil` ("desconocido"), no
+"vacío".
+
+Un permiso que ningún rol tiene convierte una ruta correctamente declarada en un `403`
+permanente para todo el mundo, incluido el administrador, sin un solo error visible. Solo
+la pregunta inversa lo encuentra: `RolesFor(p, r, a) == []` es el hallazgo que esta API
+existe para reportar.

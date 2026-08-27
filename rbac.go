@@ -235,3 +235,62 @@ func Allowed(auth Authorizer, userID string, r Resource, a Action) bool {
 	}
 	return auth(userID, r, a)
 }
+
+// RoleGrant binds a role code to one Grant. It is the shape a policy is
+// DECLARED in, and the shape introspection reads it back out in.
+//
+// It is deliberately a pair and not a map: a role holds several grants, a
+// grant is held by several roles, and a slice of pairs states that without
+// picking a winner. It also keeps this package free of map iteration order,
+// which the WASM targets in this ecosystem avoid.
+type RoleGrant struct {
+	Role  RoleCode
+	Grant Grant
+}
+
+// PolicyDescriber is implemented by whoever OWNS an Authorizer when it can
+// enumerate what it grants.
+//
+// It is optional on purpose. An Authorizer that cannot describe itself keeps
+// working exactly as before; introspection then reports the permission a route
+// requires without being able to say who holds it. What it must never do is
+// report "nobody" when it simply did not know — see RolesFor.
+type PolicyDescriber interface {
+	// Grants returns every (role, grant) pair the policy declares. The order
+	// is the policy's own declaration order, so a reader sees the policy as
+	// its author wrote it.
+	Grants() []RoleGrant
+}
+
+// RolesFor returns the role codes p grants (r, a) to, in the policy's own
+// declaration order and without repeats.
+//
+// An EMPTY result is the finding this function exists for: a permission no
+// role holds. A route requiring it is a permanent 403 that looks correctly
+// declared — the exact failure that motivated this API. Callers must render
+// that case loudly rather than as an empty column.
+//
+// A nil p returns nil. That is "unknown", not "nobody": a caller that cannot
+// tell the two apart must check p != nil itself before reporting.
+func RolesFor(p PolicyDescriber, r Resource, a Action) []RoleCode {
+	if p == nil {
+		return nil
+	}
+	var out []RoleCode
+	for _, rg := range p.Grants() {
+		if !rg.Grant.Matches(r, a) {
+			continue
+		}
+		seen := false
+		for _, have := range out {
+			if have == rg.Role {
+				seen = true
+				break
+			}
+		}
+		if !seen {
+			out = append(out, rg.Role)
+		}
+	}
+	return out
+}
