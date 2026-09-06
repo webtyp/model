@@ -31,9 +31,9 @@ Nothing here enforces anything; enforcement stays in the routers.
 
 ## Anti-footguns
 
-- `tinywasm/model` has **no dependencies** and must keep none. Everything below
-  uses only what is already in this package. Do not import `tinywasm/fmt`,
-  `tinywasm/json`, `strings`, or anything else.
+- `webtyp/model` has **no dependencies** and must keep none. Everything below
+  uses only what is already in this package. Do not import `webtyp/fmt`,
+  `webtyp/json`, `strings`, or anything else.
 - Tests in this repo are **in-package** at the module root (`package model`,
   e.g. `rbac_test.go`). Do not create a `tests/` directory.
 - `Action` is a bit mask and `Access`'s zero value is `AccessGuarded`. Do not

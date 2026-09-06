@@ -3,7 +3,7 @@ package model_test
 import (
 	"testing"
 
-	. "github.com/tinywasm/model"
+	. "webtyp.com/model"
 )
 
 // Bug proof (2026-07-10, devbrowser TestRobustInteraction/TestBrowserSwipe):

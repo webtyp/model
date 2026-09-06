@@ -87,4 +87,4 @@ model.Encodable }`): si le falta un contrato en una frontera, el defecto está a
 - Contrato de schema: `docs/API_FIELD.md` (interfaces `Fielder`, `Field`, `Permitted`).
 - Consumidores: `orm/docs/PLAN.md` (codegen), `json/docs/PLAN.md` (JSON), `jsvalue/docs/PLAN.md`
   (JS).
-- Orquestador: `~/Dev/Project/tinywasm/docs/SIZE_OPTIMIZATION_MASTER_PLAN.md`.
+- Orquestador: `~/Dev/Project/webtyp/docs/SIZE_OPTIMIZATION_MASTER_PLAN.md`.

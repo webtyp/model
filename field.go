@@ -1,6 +1,6 @@
 package model
 
-import "github.com/tinywasm/fmt"
+import "webtyp.com/fmt"
 
 // FieldType represents the abstract storage type of a struct field.
 type FieldType int
@@ -31,7 +31,7 @@ var fieldTypeNames = []string{"text", "int", "float", "bool", "blob", "struct", 
 //	}
 //
 // The encoder detects RawJSON at code-generation time (ormc), marking the field
-// as FieldRaw in the Schema(), and tinywasm/json handles it without re-serializing.
+// as FieldRaw in the Schema(), and webtyp/json handles it without re-serializing.
 type RawJSON = string
 
 func (ft FieldType) String() string {
@@ -316,7 +316,7 @@ func IsZeroPtr(ptr any, ft FieldType) bool {
 			return len(*p) == 0
 		}
 	case FieldStructSlice:
-		// Since we handle various slice types and tinywasm avoids reflection,
+		// Since we handle various slice types and webtyp avoids reflection,
 		// we check for nil pointer or rely on the specific implementation to provide length.
 		// For zero-check purposes, if it's a pointer to a slice, we check if it's nil.
 		return ptr == nil

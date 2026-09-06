@@ -1,6 +1,6 @@
 package model
 
-import "github.com/tinywasm/fmt"
+import "webtyp.com/fmt"
 
 // The access-control vocabulary. It lives here, next to ModuleNaming, because a module's
 // IDENTITY and the RESOURCE that protects it are the same name — and if they were two
@@ -8,7 +8,7 @@ import "github.com/tinywasm/fmt"
 // gate a section by one name while the server enforced another. Nobody would see an
 // error; a user would simply be shown a page and then denied its data.
 //
-// It cannot live in the library that implements authentication (tinywasm/user): that one
+// It cannot live in the library that implements authentication (webtyp/user): that one
 // imports mcp, so mcp would have to import user to type its own field, and user already
 // imports mcp. A cycle. And a domain module that only wants to say "my resource is
 // service_catalog" must not be forced to drag an OAuth stack behind it.

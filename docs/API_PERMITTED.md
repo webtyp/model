@@ -204,4 +204,4 @@ esta API existe para reportar (ruta muerta con `403` permanente).
 ## See Also
 
 - [Field and Fielder API](API_FIELD.md) for how `Permitted` integrates into schema validation
-- [`tinywasm/fmt`](../../fmt/) for `Permitted` source and character mapping (AL/AU tables)
+- [`webtyp/fmt`](../../fmt/) for `Permitted` source and character mapping (AL/AU tables)

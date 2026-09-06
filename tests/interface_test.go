@@ -1,6 +1,6 @@
 package model_test
 
-import "github.com/tinywasm/model"
+import "webtyp.com/model"
 
 // modelStub mimics ormc's generated output: if this stub stops satisfying model.Model,
 // the contract and the generator have drifted apart.

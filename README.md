@@ -1,11 +1,11 @@
-# tinywasm/model
+# webtyp/model
 <img src="docs/img/badges.svg">
 
-Core schema, validation, and codec types for tinywasm ecosystem. This package provides the foundational interfaces and types used across ORM, JSON serialization, form handling, and API layers.
+Core schema, validation, and codec types for webtyp ecosystem. This package provides the foundational interfaces and types used across ORM, JSON serialization, form handling, and API layers.
 
 ## Overview
 
-`model` provides the foundational type definitions and contracts for the tinywasm ecosystem. It focuses on:
+`model` provides the foundational type definitions and contracts for the webtyp ecosystem. It focuses on:
 
 - **Schema Metadata** - `Field`, `Fielder`, and `FieldType` for reflection-less struct introspection
 - **Validation** - `Permitted` and `Validator` for data integrity
@@ -24,7 +24,7 @@ Core schema, validation, and codec types for tinywasm ecosystem. This package pr
 ## Installation
 
 ```bash
-go get github.com/tinywasm/model
+go get webtyp.com/model
 ```
 
 ## Quick Start
@@ -135,14 +135,14 @@ One schema (`Field`) serves all layers. Serialization uses the typed codec (`Enc
 
 ## Related Packages
 
-- [`tinywasm/fmt`](../fmt/) - String manipulation and conversion
-- [`tinywasm/orm`](../orm/) - Database layer (uses `Schema()`, `Pointers()`, `Validate()`)
-- [`tinywasm/json`](../json/) - JSON encoder/decoder (uses codec)
-- [`tinywasm/form`](../form/) - Form handling (uses `Field` + `Kind`)
+- [`webtyp/fmt`](../fmt/) - String manipulation and conversion
+- [`webtyp/orm`](../orm/) - Database layer (uses `Schema()`, `Pointers()`, `Validate()`)
+- [`webtyp/json`](../json/) - JSON encoder/decoder (uses codec)
+- [`webtyp/form`](../form/) - Form handling (uses `Field` + `Kind`)
 
 ---
 
-## [Contributing](https://github.com/tinywasm/contributing)
+## [Contributing](https://github.com/webtyp/contributing)
 
 ---
 

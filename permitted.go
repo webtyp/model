@@ -1,11 +1,11 @@
 package model
 
-import "github.com/tinywasm/fmt"
+import "webtyp.com/fmt"
 
 // Permitted validates strings character-by-character against a configurable whitelist.
 //
 // Zero value = nothing permitted (strictest). Enable flags to allow character classes.
-// Moved from tinywasm/input to fmt for cross-layer reuse.
+// Moved from webtyp/input to fmt for cross-layer reuse.
 //
 // Rule: if only Minimum/Maximum are configured (no character flags),
 // Validate only checks length — it never rejects characters.

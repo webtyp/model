@@ -3,7 +3,7 @@ package model_test
 import (
 	"testing"
 
-	"github.com/tinywasm/model"
+	"webtyp.com/model"
 )
 
 func TestDefinition(t *testing.T) {

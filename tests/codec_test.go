@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/tinywasm/fmt"
-	. "github.com/tinywasm/model"
+	"webtyp.com/fmt"
+	. "webtyp.com/model"
 )
 
 type mockFieldWriter struct {

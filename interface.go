@@ -79,7 +79,7 @@ type SafeFields interface {
 // reusable module: that hardcodes an implementation the module should not know
 // about. Accept IDGenerator instead and let the composition root inject it.
 //
-// Implementations: github.com/tinywasm/unixid (time-sortable, collision-safe
+// Implementations: webtyp.com/unixid (time-sortable, collision-safe
 // under concurrent callers). A test double can be a func literal satisfying
 // this single-method interface.
 type IDGenerator interface {

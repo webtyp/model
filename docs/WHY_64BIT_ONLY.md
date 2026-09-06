@@ -9,7 +9,7 @@ for the `FieldType` enum.
 
 ## Context
 
-The heart of the tinywasm framework compiles with TinyGo to WebAssembly. The codec
+The heart of the webtyp framework compiles with TinyGo to WebAssembly. The codec
 (`FieldWriter` / `FieldReader`) is the boundary every model crosses — JSON wire, DB scan,
 JS interop. The intuition "wasm is a 32-bit platform, so 32-bit numbers should be cheaper"
 was evaluated and rejected. The reasons:

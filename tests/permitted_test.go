@@ -3,8 +3,8 @@ package model_test
 import (
 	"testing"
 
-	"github.com/tinywasm/fmt"
-	. "github.com/tinywasm/model"
+	"webtyp.com/fmt"
+	. "webtyp.com/model"
 )
 
 func TestPermittedValidate(t *testing.T) {
@@ -143,7 +143,7 @@ func TestPermitted_NoHTML_AllowsNormal(t *testing.T) {
 }
 
 func TestWidget_StandardPrinciples_RejectsHTML(t *testing.T) {
-	// Standard widgets in tinywasm/input (Text, Textarea, Email)
+	// Standard widgets in webtyp/input (Text, Textarea, Email)
 	// use Permitted whitelists that don't include <, >, &.
 	// We simulate this behavior here.
 

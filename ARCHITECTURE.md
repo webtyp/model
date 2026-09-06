@@ -2,11 +2,11 @@
 
 ## Overview
 
-The `model` package provides the foundational types and interfaces for the tinywasm ecosystem, establishing clear separation of concerns across schema, validation, and serialization.
+The `model` package provides the foundational types and interfaces for the webtyp ecosystem, establishing clear separation of concerns across schema, validation, and serialization.
 
 ## Responsibility Map
 
-### tinywasm/model (This Package)
+### webtyp/model (This Package)
 
 **Purpose:** Define the contract for schemas, validation, and typed serialization across all layers.
 
@@ -21,7 +21,7 @@ The `model` package provides the foundational types and interfaces for the tinyw
 | **Widget** | Semantic input type contract | form (input generation) |
 | **IDGenerator** | Identity-generation contract (mint a new PK) — no concrete generator hardcoded in a reusable module | domain modules (via injected `Deps`), unixid (implements it) |
 
-### tinywasm/fmt (Refactored)
+### webtyp/fmt (Refactored)
 
 **Purpose:** String manipulation, type conversion, formatting, multilingual error handling.
 
@@ -36,7 +36,7 @@ The `model` package provides the foundational types and interfaces for the tinyw
 ## Architecture Diagram
 
 ```
-tinywasm/
+webtyp/
   ├── model/               ← NEW: Schema & codec contracts
   │   ├── field.go         (moved from fmt)
   │   ├── permitted.go     (moved from fmt)
@@ -124,16 +124,16 @@ For each Field in schema:
 
 ## Migration Guide (for consumers)
 
-If you were importing from `tinywasm/fmt`:
+If you were importing from `webtyp/fmt`:
 
 ```go
 // OLD (v0.23 and earlier)
-import "github.com/tinywasm/fmt"
+import "webtyp.com/fmt"
 field := fmt.Field{...}
 codec := fmt.Encodable
 
 // NEW (v0.24+)
-import "github.com/tinywasm/model"
+import "webtyp.com/model"
 field := model.Field{...}
 codec := model.Encodable
 ```
@@ -150,8 +150,8 @@ Both packages are still available. `fmt` continues to work but now focuses on st
 
 ## Related Packages
 
-- [tinywasm/fmt](../fmt/) - String manipulation (moved Field/codec types to model)
-- [tinywasm/orm](../orm/) - Uses Field, Fielder, ValidateFields
-- [tinywasm/json](../json/) - Uses Encodable, Decodable, Field
-- [tinywasm/form](../form/) - Uses Field, Widget, Permitted
-- [tinywasm/jsvalue](../jsvalue/) - Uses Encodable, Decodable for JS boundary
+- [webtyp/fmt](../fmt/) - String manipulation (moved Field/codec types to model)
+- [webtyp/orm](../orm/) - Uses Field, Fielder, ValidateFields
+- [webtyp/json](../json/) - Uses Encodable, Decodable, Field
+- [webtyp/form](../form/) - Uses Field, Widget, Permitted
+- [webtyp/jsvalue](../jsvalue/) - Uses Encodable, Decodable for JS boundary

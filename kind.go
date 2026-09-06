@@ -1,6 +1,6 @@
 package model
 
-import "github.com/tinywasm/fmt"
+import "webtyp.com/fmt"
 
 // Kind replaces the Field.Type enum slot + Field.Widget pair.
 // Implementations are stateless templates, safe for concurrent reuse.

@@ -109,8 +109,8 @@ type ArrayReader interface {
 2. **Map-Free:** Prohibited in the contract to avoid dragging the hashmap runtime into TinyGo/WASM binaries.
 3. **Reflection-Less:** Types are handled via explicit, typed method calls.
 4. **Agnostic:** `model` only defines the interfaces. Concrete codecs are implemented in:
-   - `tinywasm/json`: Canonical JSON encoder/decoder.
-   - `tinywasm/jsvalue`: JavaScript boundary (WASM).
+   - `webtyp/json`: Canonical JSON encoder/decoder.
+   - `webtyp/jsvalue`: JavaScript boundary (WASM).
 
 ## Nil Checking
 

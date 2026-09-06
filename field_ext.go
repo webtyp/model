@@ -1,7 +1,7 @@
 package model
 
 // FieldExt extends Field with foreign-key metadata for adapters that emit FK
-// constraints (SQL compilers, DDL exporters). Moved here from tinywasm/ddlc:
+// constraints (SQL compilers, DDL exporters). Moved here from webtyp/ddlc:
 // it describes data the model declares (via SchemaExt()), not a generation
 type FieldExt struct {
 	Field

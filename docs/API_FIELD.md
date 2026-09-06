@@ -217,7 +217,7 @@ type Result struct {
 
 1. The developer declares a field with type `RawJSON`
 2. `ormc` code generation detects the type name and marks the field as `FieldRaw` in the Schema()
-3. `tinywasm/json` encoder checks `Type == FieldRaw` and emits the value inline (no quoting or re-serializing)
+3. `webtyp/json` encoder checks `Type == FieldRaw` and emits the value inline (no quoting or re-serializing)
 
 
 ### Validation (Permitted)
