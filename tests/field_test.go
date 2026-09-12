@@ -597,15 +597,21 @@ type mockFielderSlice struct {
 	items []Fielder
 }
 
-func (m *mockFielderSlice) Schema() []Field  { return nil }
-func (m *mockFielderSlice) Pointers() []any  { return nil }
 func (m *mockFielderSlice) Len() int         { return len(m.items) }
 func (m *mockFielderSlice) At(i int) Fielder { return m.items[i] }
 func (m *mockFielderSlice) Append() Fielder  { return nil }
 
-func TestFielderSliceEmbedsFielder(t *testing.T) {
-	var _ Fielder = (FielderSlice)(nil)
-	var _ Fielder = (*mockFielderSlice)(nil)
+var _ FielderSlice = (*mockFielderSlice)(nil)
+
+// A list is a sequence of rows, not a row: it has no columns of its own, so
+// FielderSlice deliberately does NOT embed Fielder. A list given Schema() or
+// Pointers() "to be helpful" would satisfy Fielder and could be passed where
+// a record is required — that is the defect this pins.
+func TestFielderSliceIsTraversalOnly(t *testing.T) {
+	var s mockFielderSlice
+	if s.Len() != 0 {
+		t.Errorf("Len = %d, want 0", s.Len())
+	}
 }
 
 func TestRefKind(t *testing.T) {

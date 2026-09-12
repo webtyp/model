@@ -17,8 +17,13 @@ type Fielder interface {
 
 // FielderSlice is implemented by generated code to allow
 // iteration over a slice of structs without reflection.
+//
+// It deliberately does NOT embed Fielder: a list is a sequence of rows and has
+// no columns of its own. The schema belongs to the element, reached through
+// At(i) and Append(). While it did embed Fielder, every generated list had to
+// answer Schema() with nil — which made a list satisfy Fielder, so it could be
+// passed where a record was required and the reader silently saw "no fields".
 type FielderSlice interface {
-	Fielder
 	Len() int
 	At(i int) Fielder
 	Append() Fielder
