@@ -1,47 +1,51 @@
 ---
-PLAN: "feat: Vector(dim) kind for embedding columns"
+PLAN: "feat: kind Vector(dim) para columnas de embeddings"
 TAG: v0.2.0
 EXECUTOR: unassigned
 REVIEWER: none
 ---
 
-> Part of the browser-native semantic search effort. Master index:
-> https://github.com/webtyp/agent/blob/main/docs/PLAN.md — decision **D1** there is the
-> rationale for everything below and is not re-argued here.
+> Parte del esfuerzo de búsqueda semántica nativa en el navegador. Índice maestro:
+> https://github.com/webtyp/agent/blob/main/docs/PLAN.md — la decisión **D1** de ahí es la
+> justificación de todo lo de abajo y no se vuelve a argumentar acá.
+>
+> **Nota de idioma:** la prosa va en español; los bloques de código mantienen sus
+> comentarios en inglés, como el resto del código fuente de este repositorio.
 
-# Plan — a `Vector(dim)` kind
+# Plan — un kind `Vector(dim)`
 
-## Why
+## Por qué
 
-Semantic search needs a column that holds an embedding: a fixed-length `[]float32`
-serialised little-endian. `model` can already carry the bytes — `FieldBlob` exists
-(`field.go:13`) and is wired through `IsZeroPtr` (`field.go:310`) and `ValuesFrom`
-(`field.go:383`) — but a plain `Blob()` column carries **no dimension**, so nothing
-downstream can reject a 384-dim vector written into a 768-dim column. That mismatch is
-silent, and it corrupts every subsequent search result rather than failing loudly.
+La búsqueda semántica necesita una columna que guarde un embedding: un `[]float32` de largo
+fijo serializado little-endian. `model` ya puede transportar los bytes — `FieldBlob` existe
+(`field.go:13`) y está cableado en `IsZeroPtr` (`field.go:310`) y `ValuesFrom`
+(`field.go:383`) — pero una columna `Blob()` a secas **no lleva dimensión**, así que nada
+aguas abajo puede rechazar un vector de 384 dims escrito en una columna de 768 dims. Ese
+desajuste es silencioso, y corrompe todos los resultados de búsqueda posteriores en vez de
+fallar ruidosamente.
 
-This plan adds the dimension to the schema, where the rest of the ecosystem can read it.
+Este plan agrega la dimensión al esquema, donde el resto del ecosistema puede leerla.
 
-## What does NOT change
+## Lo que NO cambia
 
-**No new `FieldType`.** `FieldBlob` stays the storage type. Adding a
-`FieldFloat32Slice` constant would force an edit to every exhaustive `switch` over
-`FieldType` in this repository, in `storage/mem`, `sqlt`, `postgres` and `indexdb` —
-a breaking change across six repositories that buys nothing `FieldBlob` does not already
-provide. `Vector(dim)` is a `Kind`, and `Kind` is exactly the seam designed for
-"same storage, different semantics" (it is what distinguishes `Text()` from an email
-kind today).
+**Ningún `FieldType` nuevo.** `FieldBlob` sigue siendo el tipo de almacenamiento. Agregar
+una constante `FieldFloat32Slice` obligaría a editar cada `switch` exhaustivo sobre
+`FieldType` en este repositorio, en `storage/mem`, `sqlt`, `postgres` e `indexdb` — un
+cambio incompatible en seis repositorios que no compra nada que `FieldBlob` no provea ya.
+`Vector(dim)` es un `Kind`, y `Kind` es exactamente la juntura diseñada para "mismo
+almacenamiento, distinta semántica" (es lo que hoy distingue a `Text()` de un kind de
+email).
 
-The `Kind` interface is **not** modified. Its three methods stay as they are.
+La interfaz `Kind` **no** se modifica. Sus tres métodos quedan como están.
 
-`ValuesFrom`, `IsZeroPtr`, `ScanFields` and the codecs need no edit: they dispatch on
-`Field.Type.Storage()`, which for a vector returns `FieldBlob`, already handled.
+`ValuesFrom`, `IsZeroPtr`, `ScanFields` y los codecs no necesitan edición: despachan sobre
+`Field.Type.Storage()`, que para un vector devuelve `FieldBlob`, ya contemplado.
 
-## Changes
+## Cambios
 
-### 1. `kind.go` — the `Vector` constructor
+### 1. `kind.go` — el constructor `Vector`
 
-Add below `Blob()`:
+Agregar debajo de `Blob()`:
 
 ```go
 // Dimensional is implemented by kinds whose value has a fixed element count.
@@ -75,13 +79,13 @@ func Vector(dim int) Kind {
 }
 ```
 
-`vectorKind` embeds `baseKind`, so it satisfies `Kind` with no extra method bodies.
+`vectorKind` embebe a `baseKind`, así que satisface `Kind` sin cuerpos de método extra.
 
-### 2. `field.go` — byte-level validation
+### 2. `field.go` — validación a nivel de bytes
 
-`Kind.Validate(value string) error` takes a string, which cannot express a blob
-constraint. Rather than widen that interface (it is implemented by every kind and
-called from `form`, `json` and `orm`), add a free function:
+`Kind.Validate(value string) error` recibe un string, que no puede expresar una restricción
+sobre un blob. En vez de ensanchar esa interfaz (la implementa cada kind y se la llama desde
+`form`, `json` y `orm`), agregar una función libre:
 
 ```go
 // ValidateVector checks that b is a well-formed value for field f: a multiple of
@@ -104,49 +108,49 @@ func ValidateVector(f Field, b []byte) error {
 }
 ```
 
-Callers: `vectordb` before every write, and the `storage` conformance suite.
+Llamadores: `vectordb` antes de cada escritura, y la suite de conformance de `storage`.
 
-### 3. `field.go` — document the mapping
+### 3. `field.go` — documentar el mapeo
 
-Extend the storage → Go type table in the `Field` doc comment (around line 72) with a
-row for the vector kind:
+Extender la tabla de almacenamiento → tipo Go del comentario de doc de `Field` (alrededor
+de la línea 72) con una fila para el kind vector:
 
 ```
 // | FieldBlob (kind "vector") | []byte — dim*4 little-endian float32 |
 ```
 
-### 4. `docs/` — no new document
+### 4. `docs/` — sin documento nuevo
 
-The dimension contract is documented in the doc comments above. The README's type table
-gains the same row.
+El contrato de dimensión queda documentado en los comentarios de arriba. La tabla de tipos
+del README gana la misma fila.
 
 ## Tests
 
-In `tests/field_test.go` and `tests/kind_permitted_override_test.go` style, standard
-library only:
+Al estilo de `tests/field_test.go` y `tests/kind_permitted_override_test.go`, solo librería
+estándar:
 
-| Test | Asserts |
+| Test | Verifica |
 |---|---|
-| `TestVector_StorageIsBlob` | `Vector(384).Storage() == FieldBlob` and `Name() == "vector"` |
-| `TestVector_Dim` | the kind satisfies `Dimensional` and reports the constructed dim |
-| `TestVector_ValidateOK` | `ValidateVector` accepts exactly `dim*4` bytes |
-| `TestVector_ValidateWrongDim` | 383 and 385 dims are both rejected, with the field name in the message |
-| `TestVector_ValidateNotMultipleOfFour` | a 1537-byte blob is rejected |
-| `TestVector_ValidateEmpty` | empty passes when nullable, fails when `NotNull` |
-| `TestVector_ZeroPtr` | `IsZeroPtr` on a `*[]byte` still behaves for a vector field |
-| `TestBlob_StillNotDimensional` | `Blob()` does **not** satisfy `Dimensional` — the escape hatch survives |
+| `TestVector_StorageIsBlob` | `Vector(384).Storage() == FieldBlob` y `Name() == "vector"` |
+| `TestVector_Dim` | el kind satisface `Dimensional` y reporta la dimensión construida |
+| `TestVector_ValidateOK` | `ValidateVector` acepta exactamente `dim*4` bytes |
+| `TestVector_ValidateWrongDim` | 383 y 385 dims se rechazan ambos, con el nombre del campo en el mensaje |
+| `TestVector_ValidateNotMultipleOfFour` | un blob de 1537 bytes se rechaza |
+| `TestVector_ValidateEmpty` | vacío pasa cuando es nullable, falla cuando es `NotNull` |
+| `TestVector_ZeroPtr` | `IsZeroPtr` sobre un `*[]byte` sigue comportándose para un campo vector |
+| `TestBlob_StillNotDimensional` | `Blob()` **no** satisface `Dimensional` — la vía de escape sobrevive |
 
-## Acceptance checklist
+## Checklist de aceptación
 
 ```bash
-grep -n "func Vector" kind.go            # → 1 match
-grep -n "func ValidateVector" field.go   # → 1 match
-grep -c "FieldFloat32\|FieldVector" *.go # → 0: no new FieldType was introduced
+grep -n "func Vector" kind.go            # → 1 coincidencia
+grep -n "func ValidateVector" field.go   # → 1 coincidencia
+grep -c "FieldFloat32\|FieldVector" *.go # → 0: no se introdujo ningún FieldType nuevo
 go vet ./...
 gotest
 ```
 
-Then release, because `storage` and `indexdb` both depend on this tag:
+Después liberar, porque `storage` e `indexdb` dependen ambos de este tag:
 
 ```bash
 gopush 'feat: Vector(dim) kind for embedding columns'
