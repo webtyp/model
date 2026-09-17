@@ -1,194 +1,170 @@
 ---
-PLAN: "fix!: FielderSlice stops embedding Fielder — a list has no columns"
-EXECUTOR: jules
+PLAN: "feat: kind Vector(dim) para columnas de embeddings"
+TAG: v0.2.0
+EXECUTOR: unassigned
 REVIEWER: none
 ---
 
-> This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
+> Parte del esfuerzo de búsqueda semántica nativa en el navegador. Índice maestro:
+> https://github.com/webtyp/agent/blob/main/docs/PLAN.md — la decisión **D1** de ahí es la
+> justificación de todo lo de abajo y no se vuelve a argumentar acá.
 >
-> **Phase A (GATE)** of
-> [`LIST_CONTRACT_MASTER_PLAN.md`](https://github.com/webtyp/docs/blob/main/LIST_CONTRACT_MASTER_PLAN.md).
-> `webtyp/ormc` (phase B) cannot start before this ships a tag.
+> **Nota de idioma:** la prosa va en español; los bloques de código mantienen sus
+> comentarios en inglés, como el resto del código fuente de este repositorio.
 
-# Plan — `webtyp.com/model`: a list is not a row, so stop making it answer like one
+# Plan — un kind `Vector(dim)`
 
-## 0. Context (verified against the repo — do not re-diagnose)
+## Por qué
 
-`FielderSlice` embeds `Fielder`:
+La búsqueda semántica necesita una columna que guarde un embedding: un `[]float32` de largo
+fijo serializado little-endian. `model` ya puede transportar los bytes — `FieldBlob` existe
+(`field.go:13`) y está cableado en `IsZeroPtr` (`field.go:310`) y `ValuesFrom`
+(`field.go:383`) — pero una columna `Blob()` a secas **no lleva dimensión**, así que nada
+aguas abajo puede rechazar un vector de 384 dims escrito en una columna de 768 dims. Ese
+desajuste es silencioso, y corrompe todos los resultados de búsqueda posteriores en vez de
+fallar ruidosamente.
+
+Este plan agrega la dimensión al esquema, donde el resto del ecosistema puede leerla.
+
+## Lo que NO cambia
+
+**Ningún `FieldType` nuevo.** `FieldBlob` sigue siendo el tipo de almacenamiento. Agregar
+una constante `FieldFloat32Slice` obligaría a editar cada `switch` exhaustivo sobre
+`FieldType` en este repositorio, en `storage/mem`, `sqlt`, `postgres` e `indexdb` — un
+cambio incompatible en seis repositorios que no compra nada que `FieldBlob` no provea ya.
+`Vector(dim)` es un `Kind`, y `Kind` es exactamente la juntura diseñada para "mismo
+almacenamiento, distinta semántica" (es lo que hoy distingue a `Text()` de un kind de
+email).
+
+La interfaz `Kind` **no** se modifica. Sus tres métodos quedan como están.
+
+`ValuesFrom`, `IsZeroPtr`, `ScanFields` y los codecs no necesitan edición: despachan sobre
+`Field.Type.Storage()`, que para un vector devuelve `FieldBlob`, ya contemplado.
+
+## Cambios
+
+### 1. `kind.go` — el constructor `Vector`
+
+Agregar debajo de `Blob()`:
 
 ```go
-type Fielder interface {
-	Schema() []Field
-	Pointers() []any
+// Dimensional is implemented by kinds whose value has a fixed element count.
+// Consumers type-assert for it; a kind that does not implement it is unconstrained.
+type Dimensional interface {
+	Dim() int
 }
 
-type FielderSlice interface {
-	Fielder          // ← this line is the defect
-	Len() int
-	At(i int) Fielder
-	Append() Fielder
+type vectorKind struct {
+	baseKind
+	dim int
 }
-```
 
-A list is a sequence of rows; it has no columns of its own. The schema belongs
-to the element, reached through `At(i)`/`Append()`. So every generated list type
-is forced to answer with a lie — `ormc` emits this 96 times across the monorepo:
+func (k vectorKind) Dim() int { return k.dim }
 
-```go
-func (s *UserList) Schema() []model.Field { return nil }
-func (s *UserList) Pointers() []any       { return nil }
-```
-
-Nothing calls them: `json/encode.go` and `json/decode.go` reach the rows via
-`Len()`/`At()`/`Append()` and type-assert the **element**, never the list.
-
-The harm is that having them makes the lie true for the compiler. A list
-satisfies `model.Fielder`, so `Accepts(&auth.UserList{})` compiles, and
-`mcp/tool_schema.go` believes it:
-
-```go
-func inputSchemaOf(m model.Fielder) string {
-	fields := m.Schema()
-	if len(fields) == 0 { return EmptyInputSchema }
-```
-
-The MCP tool is then published **advertising that it takes no arguments** — no
-error, no log. This plan makes that state unrepresentable.
-
-**This is not a size optimization.** It was measured first: removing the two
-stubs saves ~27 bytes per list type, which on a real 1.140.006-byte WASM client
-carrying 10 list types is 0,02 %. Do not justify or scope this change by binary
-size — see §2 of the master plan.
-
-**Anti-footgun.** Narrowing an interface cannot break an implementer: a type
-with extra methods still satisfies a smaller interface. So this change alone
-must NOT touch any generated `_orm.go`, and must NOT be "completed" by deleting
-stubs anywhere else — that is phases B and C, in other repos. Do not add a
-`replace`, do not vendor, do not edit consumers from here.
-
-## Design gate (api-design — five answers)
-
-### 1. Prior art
-
-| Concern | Frameworks | Why we differ |
-|---|---|---|
-| Collection vs record contract | **Go stdlib `sort.Interface`** (`Len`/`Less`/`Swap` — a collection contract that says nothing about the element's shape) | Exactly the shape we are moving to: the collection exposes traversal, the element exposes itself. We were the odd one out. |
-| Collection vs record contract | **Java** `Collection<E>` vs `E`, **C#** `IEnumerable<T>` vs `T` | Neither makes the collection implement the element's interface. A `List<Person>` is not a `Person`. Our `FielderSlice: Fielder` said it was. |
-| Schema introspection over a set | **encoding/json** (`reflect` walks the element), **GORM** (`Model(&User{})` names the record even when scanning into a slice) | Both keep "what are the columns" a question about the record. We do too — we just stopped also asking the slice. |
-
-### 2. Novice-name test
-
-No new name. The change is a deletion: `FielderSlice` read aloud is "a slice of
-Fielders", and a slice of things is not itself one of those things. The current
-shape is what a junior cannot predict.
-
-### 3. Complexity ledger
-
-```
-Concepts the developer must learn   +0 / −1 (nobody learns "a list reports nil columns")
-Files they must touch to do X       +0 / −0
-Lines at the call site              +0 / −0   (consumers unchanged; only generated code shrinks)
-Ways to do the same thing           +0 / −1 (was: ask the list OR the element for a schema)
-```
-
-### 4. Where it belongs
-
-`model` owns both interfaces. The fix is one line here; anywhere else it would
-be a workaround for this package's shape.
-
-### 5. What it deletes
-
-- `Fielder` from `FielderSlice`'s method set, and with it `ModelSlice`'s
-  (it embeds `FielderSlice`).
-- Downstream, in later phases: 96 `Schema() nil` + 101 `Pointers() nil`.
-
-## Quality rules
-
-```
-RULE: no stdlib in this package beyond what it already imports — webtyp/fmt only.
-RULE: every repeated string is a named constant; string literals forbidden in logic.
-RULE: do not touch any *_orm.go file in this repo or any other — phases B and C.
-```
-
-## Stage 1 — narrow `FielderSlice`
-
-**File:** `interface.go`.
-
-```go
-// FielderSlice is implemented by generated code to allow
-// iteration over a slice of structs without reflection.
+// Vector returns a kind for a fixed-length float32 embedding, stored as a
+// little-endian blob of dim*4 bytes.
 //
-// It deliberately does NOT embed Fielder: a list is a sequence of rows and has
-// no columns of its own. The schema belongs to the element, reached through
-// At(i) and Append(). While it did embed Fielder, every generated list had to
-// answer Schema() with nil — which made a list satisfy Fielder, so it could be
-// passed where a record was required and the reader silently saw "no fields".
-type FielderSlice interface {
-	Len() int
-	At(i int) Fielder
-	Append() Fielder
+// Kind.Validate operates on a string and cannot see the bytes, so it always
+// passes here; dimension enforcement is ValidateVector, called by the storage
+// layer on the []byte itself.
+func Vector(dim int) Kind {
+	return vectorKind{
+		baseKind: baseKind{
+			storage: FieldBlob,
+			name:    "vector",
+			valid:   func(string) error { return nil },
+		},
+		dim: dim,
+	}
 }
 ```
 
-Remove **only** the embedded `Fielder` line and add the paragraph above. Leave
-`Fielder`, `ModelSlice`, `Model` and every other declaration untouched —
-`ModelSlice` inherits the narrowing because it embeds `FielderSlice`.
+`vectorKind` embebe a `baseKind`, así que satisface `Kind` sin cuerpos de método extra.
 
-## Stage 2 — a test that pins the contract
+### 2. `field.go` — validación a nivel de bytes
 
-**File:** `interface_test.go` (new; this package currently has only
-`rbac_test.go`).
+`Kind.Validate(value string) error` recibe un string, que no puede expresar una restricción
+sobre un blob. En vez de ensanchar esa interfaz (la implementa cada kind y se la llama desde
+`form`, `json` y `orm`), agregar una función libre:
 
-The point of this change is that an illegal state stops compiling, so the test
-must assert the shape, not a runtime value.
+```go
+// ValidateVector checks the SHAPE of b for field f: a multiple of four bytes,
+// and exactly f.Type.Dim()*4 bytes when the kind declares a dimension. A nil or
+// empty b is accepted for a nullable field and rejected when f.NotNull.
+//
+// It cannot check more than that. A column holding a whole shard of vectors is
+// a Blob() — count*dim floats, no fixed dimension — so for those this verifies
+// the multiple-of-four invariant only, and the real dimension agreement is the
+// caller's (vectordb compares vec_index.dim against len(data)/4/count).
+func ValidateVector(f Field, b []byte) error {
+	if len(b) == 0 {
+		if f.NotNull {
+			return fmt.Err("field", f.Name, "is required")
+		}
+		return nil
+	}
+	if len(b)%4 != 0 {
+		return fmt.Err("field", f.Name, "vector length", len(b), "is not a multiple of 4")
+	}
+	if d, ok := f.Type.(Dimensional); ok && len(b)/4 != d.Dim() {
+		return fmt.Err("field", f.Name, "expects", d.Dim(), "dimensions, got", len(b)/4)
+	}
+	return nil
+}
+```
 
-1. Declare a list type that implements ONLY the narrowed contract — no
-   `Schema`, no `Pointers` — and assert it satisfies `FielderSlice`:
-   ```go
-   type onlySlice []*probeRow
+Llamadores, y es la razón de que esta función exista en `model` y no en cada consumidor:
 
-   func (s *onlySlice) Len() int               { return len(*s) }
-   func (s *onlySlice) At(i int) model.Fielder { return (*s)[i] }
-   func (s *onlySlice) Append() model.Fielder  { v := &probeRow{}; *s = append(*s, v); return v }
+- `vectordb`, antes de cada escritura. **Borra su propia aritmética de `len(b)/4`**: una
+  verificación que la librería ya hace se llama, nunca se re-implementa en el call site.
+- La suite de conformance de `storage`, que usa `model.Vector(4)` en su record `Embedding`.
 
-   var _ model.FielderSlice = (*onlySlice)(nil)
-   ```
-   (`probeRow` is a minimal `Fielder`: a struct with a real `Schema()` and
-   `Pointers()`.) This line failing to compile is the regression signal — it is
-   what proves `Fielder` is no longer required.
-2. Assert the element still carries the schema, so the narrowing did not move
-   the capability somewhere useless:
-   ```go
-   var s onlySlice
-   if got := len(s.Append().Schema()); got != 2 {
-       t.Errorf("element schema = %d fields, want 2", got)
-   }
-   ```
-3. Add a comment on the file stating that a list must NOT be given `Schema()` or
-   `Pointers()` "to be helpful" — that is the defect this plan removed.
+Lo que esta función **no** hace está en su doc comment de arriba, y no debe crecer: sobre una
+columna de shard multi-vector sólo verifica el múltiplo de 4. Prometer más sería una promesa
+que el tipo no puede sostener.
 
-Write the test in the package's existing style (`rbac_test.go` is the
-reference). Do not import anything outside `webtyp/fmt` and `testing`.
+### 3. `field.go` — documentar el mapeo
 
-## Acceptance criteria
+Extender la tabla de almacenamiento → tipo Go del comentario de doc de `Field` (alrededor
+de la línea 72) con una fila para el kind vector:
 
-1. `go build ./...`, `go vet ./...`, `go test ./...` green.
-2. `grep -n "Fielder" interface.go` → `FielderSlice` no longer lists it among
-   its embedded interfaces (it still appears in `At`/`Append` signatures and in
-   `Model`, which is correct).
-3. `grep -rn "_orm.go" .` → this change touched none.
-4. `grep -rn "TODO\|FIXME\|Deprecated" --include='*.go' .` → only hits that
-   predate this change.
+```
+// | FieldBlob (kind "vector") | []byte — dim*4 little-endian float32 |
+```
 
-## Out of scope
+### 4. `docs/` — sin documento nuevo
 
-- `ormc` still emitting the two stubs — phase B. Generated code that still has
-  them keeps compiling: extra methods never break a narrower interface.
-- Regenerating any consumer — phase C.
-- Splitting the codec entry points so lists stop being `Encodable` — measured at
-  0,12 % of a real binary and **rejected**; do not do it here.
+El contrato de dimensión queda documentado en los comentarios de arriba. La tabla de tipos
+del README gana la misma fila.
 
-| Stage | Files | Action |
-|---|---|---|
-| 1 | `interface.go` | `FielderSlice` stops embedding `Fielder`; document why |
-| 2 | `interface_test.go` (new) | compile-time proof that a list needs no schema |
+## Tests
+
+Al estilo de `tests/field_test.go` y `tests/kind_permitted_override_test.go`, solo librería
+estándar:
+
+| Test | Verifica |
+|---|---|
+| `TestVector_StorageIsBlob` | `Vector(384).Storage() == FieldBlob` y `Name() == "vector"` |
+| `TestVector_Dim` | el kind satisface `Dimensional` y reporta la dimensión construida |
+| `TestVector_ValidateOK` | `ValidateVector` acepta exactamente `dim*4` bytes |
+| `TestVector_ValidateWrongDim` | 383 y 385 dims se rechazan ambos, con el nombre del campo en el mensaje |
+| `TestVector_ValidateNotMultipleOfFour` | un blob de 1537 bytes se rechaza |
+| `TestVector_ValidateEmpty` | vacío pasa cuando es nullable, falla cuando es `NotNull` |
+| `TestVector_ZeroPtr` | `IsZeroPtr` sobre un `*[]byte` sigue comportándose para un campo vector |
+| `TestBlob_StillNotDimensional` | `Blob()` **no** satisface `Dimensional` — la vía de escape sobrevive |
+
+## Checklist de aceptación
+
+```bash
+grep -n "func Vector" kind.go            # → 1 coincidencia
+grep -n "func ValidateVector" field.go   # → 1 coincidencia
+grep -c "FieldFloat32\|FieldVector" *.go # → 0: no se introdujo ningún FieldType nuevo
+go vet ./...
+gotest
+```
+
+Después liberar, porque `storage` e `indexdb` dependen ambos de este tag:
+
+```bash
+gopush 'feat: Vector(dim) kind for embedding columns'
+```

@@ -128,6 +128,36 @@ func Blob() Kind {
 	}
 }
 
+// Dimensional is implemented by kinds whose value has a fixed element count.
+// Consumers type-assert for it; a kind that does not implement it is unconstrained.
+type Dimensional interface {
+	Dim() int
+}
+
+type vectorKind struct {
+	baseKind
+	dim int
+}
+
+func (k vectorKind) Dim() int { return k.dim }
+
+// Vector returns a kind for a fixed-length float32 embedding, stored as a
+// little-endian blob of dim*4 bytes.
+//
+// Kind.Validate operates on a string and cannot see the bytes, so it always
+// passes here; dimension enforcement is ValidateVector, called by the storage
+// layer on the []byte itself.
+func Vector(dim int) Kind {
+	return vectorKind{
+		baseKind: baseKind{
+			storage: FieldBlob,
+			name:    "vector",
+			valid:   func(string) error { return nil },
+		},
+		dim: dim,
+	}
+}
+
 // Raw returns the base Raw kind.
 // No content validation (pre-serialized JSON).
 func Raw() Kind {

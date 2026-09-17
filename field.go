@@ -74,6 +74,7 @@ type FieldDB struct {
 // | FieldFloat | float64 |
 // | FieldBool | bool |
 // | FieldBlob | []byte |
+// | FieldBlob (kind "vector") | []byte — dim*4 little-endian float32 |
 // | FieldIntSlice | []int |
 // | FieldStruct | type of the kind's ref — Struct(ref) |
 // | FieldStructSlice | [] of the kind's ref — StructSlice(ref) |
@@ -177,6 +178,30 @@ func (f Field) hasPermittedRules() bool {
 func (f Field) hasPositiveCharRules() bool {
 	return f.Letters || f.Tilde || f.Numbers || f.Spaces ||
 		f.BreakLine || f.Tab || len(f.Extra) > 0
+}
+
+// ValidateVector checks the SHAPE of b for field f: a multiple of four bytes,
+// and exactly f.Type.Dim()*4 bytes when the kind declares a dimension. A nil or
+// empty b is accepted for a nullable field and rejected when f.NotNull.
+//
+// It cannot check more than that. A column holding a whole shard of vectors is
+// a Blob() — count*dim floats, no fixed dimension — so for those this verifies
+// the multiple-of-four invariant only, and the real dimension agreement is the
+// caller's (vectordb compares vec_index.dim against len(data)/4/count).
+func ValidateVector(f Field, b []byte) error {
+	if len(b) == 0 {
+		if f.NotNull {
+			return fmt.Err("field", f.Name, "is required")
+		}
+		return nil
+	}
+	if len(b)%4 != 0 {
+		return fmt.Err("field", f.Name, "vector length", len(b), "is not a multiple of 4")
+	}
+	if d, ok := f.Type.(Dimensional); ok && len(b)/4 != d.Dim() {
+		return fmt.Err("field", f.Name, "expects", d.Dim(), "dimensions, got", len(b)/4)
+	}
+	return nil
 }
 
 // CRUD action bytes — the single source of truth for the ecosystem-wide

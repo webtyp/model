@@ -51,6 +51,7 @@ The `model` package provides constructors for base kinds covering every `FieldTy
 | `Float()` | `FieldFloat` | digits, at most one `.`, and optional leading `-`. |
 | `Bool()` | `FieldBool` | accepts `"true"`, `"false"`, `"1"`, `"0"`, `""`. |
 | `Blob()` | `FieldBlob` | binary data (no content validation). |
+| `Vector(dim)` | `FieldBlob` | fixed-length float32 embedding: `dim*4` little-endian bytes; shape checked by `ValidateVector`. |
 | `Raw()` | `FieldRaw` | pre-serialized JSON (no content validation). |
 | `Struct(ref)` | `FieldStruct` | nested struct (no string validation). |
 | `IntSlice()` | `FieldIntSlice` | slice of integers (no string validation). |
@@ -170,6 +171,7 @@ handle it explicitly.
 | `FieldFloat` | `float64` |
 | `FieldBool` | `bool` |
 | `FieldBlob` | `[]byte` |
+| `FieldBlob` (kind `"vector"`) | `[]byte` — `dim*4` little-endian float32 |
 | `FieldIntSlice` | `[]int` |
 | `FieldStruct` | type of the kind's ref — `Struct(ref)` |
 | `FieldStructSlice` | `[]` of the kind's ref — `StructSlice(ref)` |
