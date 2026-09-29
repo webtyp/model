@@ -286,7 +286,7 @@ no-`model` generando un *probe* `main` temporal que importa solo esos paquetes, 
 constructor capturado por AST y lee el `Storage()` real (cacheado por hash de `go.mod` + set de
 constructores). Se evaluaron y DESCARTARON dos alternativas: la directiva `//ormc:storage`
 (comentario = prosa que el compilador no verifica, duplica `Storage()` y puede contradecirlo —
-viola `CONSTRUCTION_HARNESS.md`) y los storage markers embebidos (API nueva en model + walk AST
+viola la [skill `api-design`](https://github.com/webtyp/devskills/blob/main/skills/api-design/SKILL.md)) y los storage markers embebidos (API nueva en model + walk AST
 heurístico en ormc). Consecuencia de diseño: un kind custom debe vivir en un paquete separado de
 las Definitions que lo usan (si no, el probe reintroduce el huevo-y-gallina → error ruidoso de
 generación).
@@ -322,7 +322,7 @@ type Model interface { model.Fielder; model.Encodable }
 ```
 
 Eso viola el arnés de construcción
-(https://github.com/webtyp/app/blob/main/docs/CONSTRUCTION_HARNESS.md): un hueco de API
+([skill `api-design`](https://github.com/webtyp/devskills/blob/main/skills/api-design/SKILL.md)): un hueco de API
 descubierto en el repo hoja, donde el consumidor no tiene autoridad para publicar aguas
 arriba, así que parchea localmente — y ese parche nunca se puede reutilizar.
 
