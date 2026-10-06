@@ -80,6 +80,16 @@ type FieldDB struct {
 // | FieldStructSlice | [] of the kind's ref — StructSlice(ref) |
 type Field struct {
 	Name      string
+	// Label is the text a person sees for this field, in ENGLISH
+	// ("IP address", "Active"). It is a translation key for webtyp.com/lang:
+	// UIs show it through lang.Translate, and the langc generator collects it.
+	// Empty → UIs derive it from Name ("is_active" → "is active").
+	Label string
+	// Help is a persistent instruction shown under the field, in ENGLISH
+	// ("Format: 12.345.678-9"). It is a translation key, like Label. Put
+	// instructions here, never in a placeholder (which only shows an example
+	// and disappears while typing). Empty → no help is shown.
+	Help string
 	Type      Kind
 	NotNull   bool
 	OmitEmpty bool     // omit from JSON when zero value

@@ -1,5 +1,6 @@
-package model
+package model_test
 
+import . "webtyp.com/model"
 import "testing"
 
 type fakeModule struct{ name string }
@@ -82,12 +83,12 @@ func TestGrantMatches(t *testing.T) {
 		act   Action
 		want  bool
 	}{
-		{"exacto", Grant{resCatalog, Read}, resCatalog, Read, true},
-		{"otro recurso", Grant{resCatalog, Read}, resInvoice, Read, false},
-		{"otra acción", Grant{resCatalog, Read}, resCatalog, Delete, false},
-		{"comodín de recurso", Grant{Wildcard, Read}, resInvoice, Read, true},
-		{"todas las acciones", Grant{resInvoice, AllActions}, resInvoice, Delete, true},
-		{"acceso total", Grant{Wildcard, AllActions}, "lo_que_sea", Create, true},
+		{"exacto", Grant{Resource: resCatalog, Actions: Read}, resCatalog, Read, true},
+		{"otro recurso", Grant{Resource: resCatalog, Actions: Read}, resInvoice, Read, false},
+		{"otra acción", Grant{Resource: resCatalog, Actions: Read}, resCatalog, Delete, false},
+		{"comodín de recurso", Grant{Resource: Wildcard, Actions: Read}, resInvoice, Read, true},
+		{"todas las acciones", Grant{Resource: resInvoice, Actions: AllActions}, resInvoice, Delete, true},
+		{"acceso total", Grant{Resource: Wildcard, Actions: AllActions}, "lo_que_sea", Create, true},
 	}
 
 	for _, tt := range tests {

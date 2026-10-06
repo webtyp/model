@@ -32,6 +32,30 @@ func TestFieldTypeString(t *testing.T) {
 	}
 }
 
+func TestFieldDisplayTexts(t *testing.T) {
+	def := &Definition{
+		Name: "test_display",
+		Fields: Fields{
+			{Name: "ip", Label: "IP address", Help: "Format: 192.168.1.1", Type: Text()},
+			{Name: "empty", Type: Text()},
+		},
+	}
+
+	if def.Fields[0].Label != "IP address" {
+		t.Errorf("expected Label 'IP address', got %q", def.Fields[0].Label)
+	}
+	if def.Fields[0].Help != "Format: 192.168.1.1" {
+		t.Errorf("expected Help 'Format: 192.168.1.1', got %q", def.Fields[0].Help)
+	}
+
+	if def.Fields[1].Label != "" {
+		t.Errorf("expected empty Label, got %q", def.Fields[1].Label)
+	}
+	if def.Fields[1].Help != "" {
+		t.Errorf("expected empty Help, got %q", def.Fields[1].Help)
+	}
+}
+
 // A03 Injection/XSS — Kind validation baseline
 func TestBaseKinds(t *testing.T) {
 	tests := []struct {
