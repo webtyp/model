@@ -2,6 +2,8 @@
 PLAN: "feat: Field.Label and Field.Help — the English display texts of a field"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 4143887744058639308
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
