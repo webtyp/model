@@ -1,6 +1,6 @@
-// Root-level test (justified): probeRow implements Fielder with private types/methods
-package model
+package model_test
 
+import . "webtyp.com/model"
 import "testing"
 
 // A list must NOT be given Schema() or Pointers() "to be helpful" — that is
