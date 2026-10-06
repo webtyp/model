@@ -38,8 +38,8 @@ var UserModel = model.Definition{
     Name: "user",
     Fields: model.Fields{
         {Name: "id",      Type: model.Int(),  DB: &model.FieldDB{PK: true, AutoInc: true}},
-        {Name: "name",    Type: model.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 2}},
-        {Name: "email",   Type: model.Text(), NotNull: true},
+        {Name: "name",    Label: "Full Name", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 2}},
+        {Name: "email",   Help: "Format: name@example.com", Type: model.Text(), NotNull: true},
         {Name: "address", Type: model.Struct(&AddressModel)}, // composition
         {Name: "staff_id", Type: model.Int(), Ref: &StaffModel,
             DB: &model.FieldDB{RefColumn: "id"}}, // scalar FK: Go type stays int64
@@ -48,6 +48,8 @@ var UserModel = model.Definition{
 ```
 
 **Why fail-closed?** Validation is no longer optional. A resource left reachable because nobody explicitly configured a widget is a silent failure. Standard kinds like `model.Text()` provide an input-boundary XSS floor by default. Use `model.Raw()` or `model.Blob()` only when you explicitly need an unvalidated escape hatch — these are easily auditable via grep.
+
+**Label and Help texts:** `Label` and `Help` are English texts; they are the translation key — never write another language here. Instructions go in `Help`, never in a placeholder.
 
 ### The generated Schema
 

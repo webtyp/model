@@ -1,3 +1,4 @@
+// Root-level test (justified): probeRow implements Fielder with private types/methods
 package model
 
 import "testing"

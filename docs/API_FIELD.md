@@ -104,9 +104,11 @@ field, ok := UserModel.Field("email")
 ```go
 type Field struct {
     Name      string
+    Label     string      // English display text; translation key. Empty = derive from Name.
+    Help      string      // English instructions; translation key. Empty = no help shown.
     Type      Kind
     NotNull   bool
-    OmitEmpty bool        // omit from JSON when zero value
+    OmitEmpty bool        // omit from JSON when JSON zero value
     DB        *FieldDB    // nil for formonly/transport structs
     Ref       *Definition // scalar FK only. Composition uses the Kind parameter (see below).
     Exclude   bool        // field exists on the generated struct but is excluded from
@@ -122,6 +124,13 @@ type FieldDB struct {
     OnDelete  string // ON DELETE action. Empty = generator default (e.g. CASCADE).
 }
 ```
+
+### Label and Help
+
+`Label` and `Help` are texts for UI forms, written in **English**.
+They serve as translation keys for the frontend (via `webtyp.com/lang`).
+- **Label**: "IP address", "Active". If empty, UIs usually derive it from the `Name` ("is_active" -> "is active").
+- **Help**: Persistent instructions shown under the field ("Format: 12.345.678-9"). Never write instructions in a placeholder (placeholders only show examples and disappear).
 
 ### Exclude
 

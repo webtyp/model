@@ -1,3 +1,4 @@
+// Root-level test (justified): Uses private types like fakeModule to test RBAC logic
 package model
 
 import "testing"
