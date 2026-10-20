@@ -51,6 +51,18 @@ var UserModel = model.Definition{
 
 **Label and Help texts:** `Label` and `Help` are English texts; they are the translation key — never write another language here. Instructions go in `Help`, never in a placeholder.
 
+### Instants: `UnixTime()` and `NanoTime()`
+
+A field that holds an instant declares its unit: `model.UnixTime()` for a date or a deadline (seconds) and
+`model.NanoTime()` for the moment an event happened (nanoseconds). Both are stored as integer columns, so backends and
+codecs treat them like `Int()`; `ormc` generates them as `webtyp.com/time.Unix` and `time.Nano`, so assigning one unit
+to the other does not compile. Never declare an instant as `model.Int()`.
+
+```go
+{Name: "expires_at", Type: model.UnixTime()},
+{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true},
+```
+
 ### The generated Schema
 
 `ormc` reads the `Definition` var and generates the row struct plus the

@@ -67,6 +67,24 @@ func Int() Kind {
 	}
 }
 
+// UnixTime is an instant in whole seconds (webtyp.com/time.Unix): a date or a deadline. It is stored as an integer
+// column; ormc generates the field as time.Unix, so a nanosecond instant assigned to it does not compile.
+func UnixTime() Kind {
+	return baseKind{storage: FieldInt, name: kindUnixTime, valid: Int().Validate}
+}
+
+// NanoTime is an instant in nanoseconds (webtyp.com/time.Nano): the moment an event happened (created_at, updated_at).
+// Stored as an integer column; ormc generates the field as time.Nano.
+func NanoTime() Kind {
+	return baseKind{storage: FieldInt, name: kindNanoTime, valid: Int().Validate}
+}
+
+// Names of the instant kinds: what ormc reads to choose the Go type of the field.
+const (
+	kindUnixTime = "unix_time"
+	kindNanoTime = "nano_time"
+)
+
 // Float returns the base Float kind.
 // Accepts digits, at most one '.', and an optional leading minus sign.
 func Float() Kind {
