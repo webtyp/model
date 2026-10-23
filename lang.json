@@ -1,0 +1,32 @@
+{
+  "languages": ["es"],
+  "keys": {
+    "allowed": ["permitido"],
+    "bool": ["bool"],
+    "character": ["carácter"],
+    "chars": ["caracteres"],
+    "dimensions, got": ["dimensiones, se obtuvieron"],
+    "expects": ["espera"],
+    "field": ["campo"],
+    "float": ["float"],
+    "int": ["int"],
+    "invalid": ["inválido"],
+    "is not a multiple of 4": ["no es múltiplo de 4"],
+    "is required": ["es obligatorio"],
+    "kind required": ["tipo requerido"],
+    "line": ["de línea"],
+    "maximum": ["máximo"],
+    "minimum": ["mínimo"],
+    "new": ["salto"],
+    "not": ["no"],
+    "ref required": ["referencia requerida"],
+    "required": ["requerido"],
+    "space": ["espacio"],
+    "start": ["inicio"],
+    "tab": ["tabulador"],
+    "text not allowed": ["texto no permitido"],
+    "unknown action letter:": ["letra de acción desconocida:"],
+    "vector length": ["longitud del vector"],
+    "— the verbs are c, r, u, d": ["— los verbos son c, r, u, d"]
+  }
+}
