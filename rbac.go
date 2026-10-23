@@ -155,7 +155,14 @@ func ParseAction(s string) (Action, error) {
 			}
 		}
 		if !known {
-			return 0, fmt.Err("unknown action letter:", string(s[i]), "— the verbs are c, r, u, d")
+			var letters []byte
+			for i, al := range actionLetters {
+				if i > 0 {
+					letters = append(letters, ',', ' ')
+				}
+				letters = append(letters, al.letter)
+			}
+			return 0, fmt.Err("unknown action letter:", string(s[i]), "— the verbs are", string(letters))
 		}
 	}
 	return a, nil

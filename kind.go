@@ -54,12 +54,12 @@ func Int() Kind {
 			for i, r := range value {
 				if i == 0 && r == '-' {
 					if len(value) == 1 {
-						return fmt.Err("int", "invalid")
+						return fmt.Err("not valid as", fieldTypeNames[FieldInt])
 					}
 					continue
 				}
 				if r < '0' || r > '9' {
-					return fmt.Err("int", "invalid")
+					return fmt.Err("not valid as", fieldTypeNames[FieldInt])
 				}
 			}
 			return nil
@@ -99,19 +99,19 @@ func Float() Kind {
 			for i, r := range value {
 				if i == 0 && r == '-' {
 					if len(value) == 1 {
-						return fmt.Err("float", "invalid")
+						return fmt.Err("not valid as", fieldTypeNames[FieldFloat])
 					}
 					continue
 				}
 				if r == '.' {
 					if hasDot {
-						return fmt.Err("float", "invalid")
+						return fmt.Err("not valid as", fieldTypeNames[FieldFloat])
 					}
 					hasDot = true
 					continue
 				}
 				if r < '0' || r > '9' {
-					return fmt.Err("float", "invalid")
+					return fmt.Err("not valid as", fieldTypeNames[FieldFloat])
 				}
 			}
 			return nil
@@ -130,7 +130,7 @@ func Bool() Kind {
 			case "true", "false", "1", "0", "":
 				return nil
 			default:
-				return fmt.Err("bool", "invalid")
+				return fmt.Err("not valid as", fieldTypeNames[FieldBool])
 			}
 		},
 	}

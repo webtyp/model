@@ -67,7 +67,7 @@ func (p Permitted) validateChars(field, text string) error {
 	// Forbidden substrings
 	for _, na := range p.NotAllowed {
 		if fmt.Contains(text, na) {
-			return fmt.Err(field, "text not allowed", na)
+			return fmt.Err(field, "text", "not", "allowed", na)
 		}
 	}
 
