@@ -3,8 +3,10 @@ PLAN: "feat: Field.Row and Field.Options — a field says where it shows in a li
 TAG: v0.2.7
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 2373001823178949158
+PR: https://github.com/webtyp/model/pull/7
+REVIEWED_COMMIT: 0228cca309f2b282e25889d3956d2f5fc92209a1
 ---
 
 > Read AGENTS.md at the repo root before any change.
