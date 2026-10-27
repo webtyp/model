@@ -3,6 +3,8 @@ PLAN: "feat: Field.Row and Field.Options — a field says where it shows in a li
 TAG: v0.2.7
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 2373001823178949158
 ---
 
 > Read AGENTS.md at the repo root before any change.
