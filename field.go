@@ -109,6 +109,15 @@ type Field struct {
 	// this is a Go language limitation, not a model design gap. Two-phase assignment via init()
 	// is a workaround but is out of scope for ormc to auto-detect; report it if ever needed.
 	Ref *Definition
+	// Row says where this field shows in a list row of its record: RowTitle (the
+	// one main text), RowDetail (secondary text; several RowDetail fields are joined
+	// with " · " in declaration order) or RowBadge (the leading badge, e.g. a date or
+	// an hour). The zero value keeps the field out of the row. See RowOf.
+	Row RowSlot
+	// Options is the Definition whose records fill this field's choices (a select)
+	// when the field is NOT a foreign key; a foreign key says it with Ref, which
+	// fills the choices too. Setting both is an error (ValidateRow).
+	Options *Definition
 	Exclude   bool     // field exists on the generated struct but is NOT part of
 	                   // Pointers()/EncodeFields()/DecodeFields() — no persistence, no wire codec.
 	                   // Use for hand-managed data the struct must carry but ormc must not touch
