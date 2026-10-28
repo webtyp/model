@@ -51,17 +51,17 @@ var UserModel = model.Definition{
 
 **Label and Help texts:** `Label` and `Help` are English texts; they are the translation key — never write another language here. Instructions go in `Help`, never in a placeholder.
 
-### List rows and select options
+### List items and select options
 
-A list row (title, detail, badge) and the options for a select are declared on the fields:
+A list item (label, description, badge) and the options for a select are declared on the fields:
 
 ```go
-{Name: "name", Type: input.Text(), Label: "Name", Row: model.RowTitle},
-{Name: "sku", Type: input.Text(), Label: "SKU", Row: model.RowDetail},
+{Name: "name", Type: input.Text(), Label: "Name", Item: model.ItemLabel},
+{Name: "sku", Type: input.Text(), Label: "SKU", Item: model.ItemDescription},
 {Name: "zone_id", Type: input.Select(), Label: "Zone", Options: &ZoneModel}, // options without a foreign key
 ```
 
-`RowOf(record)` builds the row from the schema and the pointers.
+`ormc` generates `func (m *X) Item() model.Item` from these marks, calling `JoinItem` when several fields are marked `ItemDescription`, and validates them at generation time with `ValidateItem`.
 
 ### Instants: `UnixTime()` and `NanoTime()`
 
