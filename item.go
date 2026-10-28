@@ -34,17 +34,13 @@ const itemSeparator = " · "
 // when several fields are marked ItemDescription.
 // Example: model.JoinItem("local", "", "Oficina") == "local · Oficina"
 func JoinItem(parts ...string) string {
-	out := ""
+	var non []string
 	for _, p := range parts {
-		if p == "" {
-			continue
+		if p != "" {
+			non = append(non, p)
 		}
-		if out != "" {
-			out += itemSeparator
-		}
-		out += p
 	}
-	return out
+	return fmt.JoinSlice(non, itemSeparator)
 }
 
 const (
