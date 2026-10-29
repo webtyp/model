@@ -2,6 +2,8 @@
 PLAN: "feat: ResourceOf and FeatureResource — a permission comes from its table, or is declared once by the library that owns the feature"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 593671046190705875
 ---
 
 > Read AGENTS.md at the repo root before any change.
