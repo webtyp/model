@@ -34,6 +34,11 @@ The `model` package provides the foundational types and interfaces for the webty
 | **Utilities** (HTML escape, JSON escape, etc.) | Format-specific escaping | json, dom |
 | **Translation (lang subpackage)** | Multilingual error messages | all packages |
 
+
+### Error Kinds in Model
+
+The error kinds (`ErrorKind`) live in `model` because modules, `orm`, and `rpc` all import it. This provides a central vocabulary for typed refusals across the ecosystem, inspired by precedents in Kubernetes (`k8s.io/apimachinery`) and gRPC status codes. The zero value of the kind is internal (`ErrorInternal`) meaning any unclassified error is treated as an internal error and kept away from the user.
+
 ## Architecture Diagram
 
 ```

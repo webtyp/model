@@ -2,8 +2,10 @@
 PLAN: "feat: typed refusals — an error says its kind (invalid, not found, conflict) and, when a field failed, which one"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 4035289667386009274
+PR: https://github.com/webtyp/model/pull/8
+REVIEWED_COMMIT: ddb0f6651660d32d080ad8178090853584c7bafb
 ---
 
 > Read AGENTS.md at the repo root before any change.
@@ -176,3 +178,8 @@ gotest
 | 2 | `field.go`, `permitted.go` | existing tests green, unedited |
 | 3 | `tests/error_test.go` | 6 tests pass |
 | 4 | `README.md`, `ARCHITECTURE.md` | sections present |
+
+
+## Executor notes
+
+All tasks implemented successfully.
