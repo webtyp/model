@@ -39,6 +39,10 @@ The `model` package provides the foundational types and interfaces for the webty
 
 The error kinds (`ErrorKind`) live in `model` because modules, `orm`, and `rpc` all import it. This provides a central vocabulary for typed refusals across the ecosystem, inspired by precedents in Kubernetes (`k8s.io/apimachinery`) and gRPC status codes. The zero value of the kind is internal (`ErrorInternal`) meaning any unclassified error is treated as an internal error and kept away from the user.
 
+### RBAC Resource Construct
+
+The `Resource` type was originally a free-form string, which led to a drift where the UI and server enforced different strings without compilation errors. Based on precedents in Django (default permissions per model) and Kubernetes (resource equals API type), the permission of a table now comes from its `Definition` using `ResourceOf`. Non-table features declare their permission explicitly using `FeatureResource`. This stops string literal drift, similarly to how `Action` closed the verb set to avoid typos.
+
 ## Architecture Diagram
 
 ```

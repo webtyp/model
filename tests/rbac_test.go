@@ -112,23 +112,6 @@ func TestFullAccessIsNeverGrantedImplicitly(t *testing.T) {
 	}
 }
 
-// La razón de que el vocabulario viva junto a ModuleNaming: la identidad de un módulo y el
-// recurso que lo protege son EL MISMO nombre, y ahora no pueden divergir.
-func TestResourceOfIsTheModuleIdentity(t *testing.T) {
-	mod := fakeModule{name: "service_catalog"}
-
-	if got := ResourceOf(mod); got != resCatalog {
-		t.Errorf("ResourceOf = %q; se esperaba la identidad del módulo", got)
-	}
-
-	// La UI filtra por identidad; el servidor exige por recurso. Si fueran dos strings
-	// distintos, al usuario se le mostraría una sección y luego se le negarían sus datos,
-	// sin un solo error.
-	policy := []Grant{{Resource: ResourceOf(mod), Actions: Read}}
-	if !AnyGrant(policy, ResourceOf(mod), Read) {
-		t.Error("identidad y recurso divergieron")
-	}
-}
 
 // El tipo es numérico porque SOLO un tipo numérico cierra el conjunto de verbos: con un
 // `type Action string`, `Requires("orders", "write")` sigue compilando — un verbo inventado
