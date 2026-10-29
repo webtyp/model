@@ -21,6 +21,19 @@ Core schema, validation, and codec types for webtyp ecosystem. This package prov
 - 📦 **Zero dependencies** - No reflection, no maps, no `any` boxing in codec paths
 - ⚡ **WebAssembly optimized** - Small binary footprint for WASM targets
 
+## Errors
+
+The package defines a vocabulary for error kinds (reasons an operation failed) through four predefined kinds: `ErrorInternal`, `ErrorInvalid`, `ErrorNotFound`, and `ErrorConflict`.
+
+Modules declare refusals using constants:
+```go
+const ErrNotFound model.NotFound = "service not found"
+```
+
+- `model.KindOf(err)` returns the kind of an error.
+- `model.FieldOf(err)` returns the specific field name the validation error occurred on.
+- An unclassified error (zero value) is `ErrorInternal`: never shown to the user.
+
 ## Installation
 
 ```bash

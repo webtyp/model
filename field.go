@@ -149,6 +149,17 @@ func (f Field) IsAutoInc() bool { return f.DB != nil && f.DB.AutoInc }
 // dangerous character it whitelists (encode at the output layer). Semantic
 // kinds (email, ...) and non-text kinds (Int, Float, Bool) always validate.
 func (f Field) Validate(value string) error {
+	err := f.validate(value)
+	if err == nil {
+		return nil
+	}
+	if _, ok := err.(*FieldError); ok {
+		return err
+	}
+	return &FieldError{Field: f.Name, Err: err}
+}
+
+func (f Field) validate(value string) error {
 	if f.NotNull && value == "" {
 		return fmt.Err(f.Name, "required")
 	}
@@ -209,15 +220,15 @@ func (f Field) hasPositiveCharRules() bool {
 func ValidateVector(f Field, b []byte) error {
 	if len(b) == 0 {
 		if f.NotNull {
-			return fmt.Err("field", f.Name, "is required")
+			return &FieldError{Field: f.Name, Err: fmt.Err("field", f.Name, "is required")}
 		}
 		return nil
 	}
 	if len(b)%4 != 0 {
-		return fmt.Err("field", f.Name, "vector length", len(b), "is not a multiple of 4")
+		return &FieldError{Field: f.Name, Err: fmt.Err("field", f.Name, "vector length", len(b), "is not a multiple of 4")}
 	}
 	if d, ok := f.Type.(Dimensional); ok && len(b)/4 != d.Dim() {
-		return fmt.Err("field", f.Name, "expects", d.Dim(), "dimensions, got", len(b)/4)
+		return &FieldError{Field: f.Name, Err: fmt.Err("field", f.Name, "expects", d.Dim(), "dimensions, got", len(b)/4)}
 	}
 	return nil
 }
@@ -251,7 +262,7 @@ func ValidateFields(action byte, f Fielder) error {
 	ptrs := f.Pointers()
 	for i, field := range schema {
 		if field.Type == nil {
-			return fmt.Err(field.Name, "kind required")
+			return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "kind required")}
 		}
 		ft := field.Type.Storage()
 
@@ -262,11 +273,11 @@ func ValidateFields(action byte, f Fielder) error {
 				case FieldText, FieldRaw:
 					val, _ := ReadStringPtr(ptrs[i])
 					if val == "" {
-						return fmt.Err(field.Name, "required")
+						return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "required")}
 					}
 				default:
 					if IsZeroPtr(ptrs[i], ft) {
-						return fmt.Err(field.Name, "required")
+						return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "required")}
 					}
 				}
 			}
@@ -284,7 +295,7 @@ func ValidateFields(action byte, f Fielder) error {
 
 			// PK always required (in ActionCreate without AutoInc, in ActionUpdate, and any other)
 			if field.IsPK() && val == "" {
-				return fmt.Err(field.Name, "required")
+				return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "required")}
 			}
 
 			if err := field.Validate(val); err != nil {
@@ -306,11 +317,11 @@ func ValidateFields(action byte, f Fielder) error {
 		default:
 			// PK always required
 			if field.IsPK() && IsZeroPtr(ptrs[i], ft) {
-				return fmt.Err(field.Name, "required")
+				return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "required")}
 			}
 			// Non-text fields: only check NotNull (zero value check)
 			if field.NotNull && IsZeroPtr(ptrs[i], ft) {
-				return fmt.Err(field.Name, "required")
+				return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "required")}
 			}
 		}
 	}
