@@ -2,11 +2,9 @@ package model
 
 import "webtyp.com/fmt"
 
-// The access-control vocabulary. It lives here, next to ModuleNaming, because a module's
-// IDENTITY and the RESOURCE that protects it are the same name — and if they were two
-// strings that merely happened to match, they would drift apart in silence: the UI would
-// gate a section by one name while the server enforced another. Nobody would see an
-// error; a user would simply be shown a page and then denied its data.
+// The access-control vocabulary. It lives here, next to ModuleNaming, because
+// the resource that protects a record is its table (ResourceOf); a module
+// protects each table it owns separately.
 //
 // It cannot live in the library that implements authentication (webtyp/user): that one
 // imports mcp, so mcp would have to import user to type its own field, and user already
@@ -65,7 +63,7 @@ func (a Access) String() string {
 }
 
 // Resource is the thing being protected: "service_catalog", "invoices".
-// The consumer declares its own — a library that enforces access must never invent one.
+// Build it with ResourceOf (a table) or FeatureResource (a feature); a plain string will stop compiling.
 type Resource string
 
 // Action is what may be done to a Resource. It is a CLOSED set — the four persistence
@@ -182,12 +180,29 @@ type RoleCode string
 // an escape hatch — which is exactly why it is closed.
 const Wildcard Resource = "*"
 
-// ResourceOf is the resource that protects a module: its own identity.
+// ResourceOf is the permission of a table: the name of its Definition. A
+// Definition with no primary-key field is not a table and gets "" — an enforcer
+// rejects a guarded route with an empty resource at startup (AccessGuarded).
 //
-// This is the whole point of putting the vocabulary next to ModuleNaming. The convention
-// "a module's ID is its RBAC resource" used to be a line in a document that nothing
-// enforced; here it is a function, so the two can no longer disagree.
-func ResourceOf(m ModuleNaming) Resource { return Resource(m.ModelName()) }
+//	reg.Operation(OpListServices, h).Requires(model.ResourceOf(&ServiceModel), model.Read)
+func ResourceOf(def *Definition) Resource {
+	if def == nil {
+		return ""
+	}
+	for _, f := range def.Fields {
+		if f.IsPK() {
+			return Resource(def.Name)
+		}
+	}
+	return ""
+}
+
+// FeatureResource is the permission of something that is not a table — the API
+// explorer, the database diagram. Declare it once, as a package variable, in the
+// library that owns the feature; never inline it at a call site.
+//
+//	var ResourceIntrospection = model.FeatureResource("api_explorer")
+func FeatureResource(name string) Resource { return Resource(name) }
 
 // Grant is one line of a policy: what a role may do to a resource. Actions is a SET, so
 // "may read and update the catalog" is one Grant, not two:

@@ -34,6 +34,20 @@ const ErrNotFound model.NotFound = "service not found"
 - `model.FieldOf(err)` returns the specific field name the validation error occurred on.
 - An unclassified error (zero value) is `ErrorInternal`: never shown to the user.
 
+## RBAC (Access Control)
+
+The package provides a vocabulary for role-based access control, ensuring that the resource that protects a module is strongly typed.
+
+```go
+// A permission derived from a table (its Definition)
+res := model.ResourceOf(&ServiceModel)
+
+// A permission for a feature that is not a table
+var ResourceDiagram = model.FeatureResource("database_diagram")
+```
+
+Step 3 will make a plain string stop compiling. Use these two constructors exclusively.
+
 ## Installation
 
 ```bash

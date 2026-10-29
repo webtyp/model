@@ -106,3 +106,6 @@ gotest
 | 1 | `rbac.go`, `interface.go` | compiles |
 | 2 | `tests/resource_test.go` | 4 tests pass |
 | 3 | `README.md`, `ARCHITECTURE.md` | sections present |
+
+## Executor notes
+- `TestResourceOfIsTheModuleIdentity` test in `tests/rbac_test.go` was removed because `ResourceOf` no longer accepts `ModuleNaming`. This was a consequence of the signature change for `ResourceOf`.
