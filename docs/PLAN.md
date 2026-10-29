@@ -2,6 +2,8 @@
 PLAN: "feat: typed refusals — an error says its kind (invalid, not found, conflict) and, when a field failed, which one"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 4035289667386009274
 ---
 
 > Read AGENTS.md at the repo root before any change.
