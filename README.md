@@ -32,6 +32,7 @@ const ErrNotFound model.NotFound = "service not found"
 
 - `model.KindOf(err)` returns the kind of an error.
 - `model.FieldOf(err)` returns the specific field name the validation error occurred on.
+- Both work the same on the server and in the browser: any error with `Kind()` (`Kinded`) or `FailedField()` (`Fielded`) answers them — the `rpc` client's error does, so a screen never needs to know the transport.
 - An unclassified error (zero value) is `ErrorInternal`: never shown to the user.
 
 ## RBAC (Access Control)

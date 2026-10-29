@@ -113,3 +113,16 @@ func TestErrorKind_String(t *testing.T) {
 		}
 	}
 }
+
+// fieldReporter stands for an error built elsewhere (the rpc client) that knows
+// which field failed: FieldOf must answer it the same way it answers a FieldError.
+type fieldReporter struct{}
+
+func (fieldReporter) Error() string       { return "rpc: 400 name required" }
+func (fieldReporter) FailedField() string { return "name" }
+
+func TestFieldOf_AnyErrorThatNamesItsField(t *testing.T) {
+	if got := model.FieldOf(fieldReporter{}); got != "name" {
+		t.Errorf("FieldOf = %q, want %q", got, "name")
+	}
+}

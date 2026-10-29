@@ -57,8 +57,16 @@ type FieldError struct {
 	Err   error
 }
 
-func (e *FieldError) Error() string   { return e.Err.Error() }
-func (e *FieldError) Kind() ErrorKind { return ErrorInvalid }
+func (e *FieldError) Error() string       { return e.Err.Error() }
+func (e *FieldError) Kind() ErrorKind     { return ErrorInvalid }
+func (e *FieldError) FailedField() string { return e.Field }
+
+// Fielded is an error that knows which field failed: a FieldError on the server,
+// the rpc client's error in the browser.
+type Fielded interface {
+	error
+	FailedField() string
+}
 
 // KindOf returns err's kind; an error that does not say is ErrorInternal.
 //
@@ -71,9 +79,11 @@ func KindOf(err error) ErrorKind {
 }
 
 // FieldOf returns the field a validation error is about, or "" when it is not one.
+// The same call works on the server and in the browser (the rpc client's error is
+// Fielded too).
 func FieldOf(err error) string {
-	if f, ok := err.(*FieldError); ok {
-		return f.Field
+	if f, ok := err.(Fielded); ok {
+		return f.FailedField()
 	}
 	return ""
 }
