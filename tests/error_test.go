@@ -32,7 +32,7 @@ type errTestManualFielder struct {
 }
 
 func (f *errTestManualFielder) Schema() []model.Field { return f.schema }
-func (f *errTestManualFielder) Pointers() []any { return f.ptrs }
+func (f *errTestManualFielder) Pointers() []any       { return f.ptrs }
 
 func TestFieldOf_RequiredField(t *testing.T) {
 	type userActionMock struct {

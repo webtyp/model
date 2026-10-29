@@ -79,7 +79,7 @@ type FieldDB struct {
 // | FieldStruct | type of the kind's ref — Struct(ref) |
 // | FieldStructSlice | [] of the kind's ref — StructSlice(ref) |
 type Field struct {
-	Name      string
+	Name string
 	// Label is the text a person sees for this field, in ENGLISH
 	// ("IP address", "Active"). It is a translation key for webtyp.com/lang:
 	// UIs show it through lang.Translate, and the langc generator collects it.
@@ -89,7 +89,7 @@ type Field struct {
 	// ("Format: 12.345.678-9"). It is a translation key, like Label. Put
 	// instructions here, never in a placeholder (which only shows an example
 	// and disappears while typing). Empty → no help is shown.
-	Help string
+	Help      string
 	Type      Kind
 	NotNull   bool
 	OmitEmpty bool     // omit from JSON when zero value
@@ -117,11 +117,11 @@ type Field struct {
 	// when the field is NOT a foreign key; a foreign key says it with Ref, which
 	// fills the choices too. Setting both is an error (ValidateItem).
 	Options *Definition
-	Exclude   bool     // field exists on the generated struct but is NOT part of
-	                   // Pointers()/EncodeFields()/DecodeFields() — no persistence, no wire codec.
-	                   // Use for hand-managed data the struct must carry but ormc must not touch
-	                   // (e.g. a password hash set via a side channel, never scanned/serialized).
-	Permitted          // embedded: validation rules (characters, min/max)
+	Exclude bool // field exists on the generated struct but is NOT part of
+	// Pointers()/EncodeFields()/DecodeFields() — no persistence, no wire codec.
+	// Use for hand-managed data the struct must carry but ormc must not touch
+	// (e.g. a password hash set via a side channel, never scanned/serialized).
+	Permitted // embedded: validation rules (characters, min/max)
 }
 
 // IsPK returns true if the field is a Primary Key.

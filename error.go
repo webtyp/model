@@ -43,12 +43,12 @@ type Invalid string
 type NotFound string
 type Conflict string
 
-func (e Invalid) Error() string      { return string(e) }
-func (e Invalid) Kind() ErrorKind    { return ErrorInvalid }
-func (e NotFound) Error() string     { return string(e) }
-func (e NotFound) Kind() ErrorKind   { return ErrorNotFound }
-func (e Conflict) Error() string     { return string(e) }
-func (e Conflict) Kind() ErrorKind   { return ErrorConflict }
+func (e Invalid) Error() string    { return string(e) }
+func (e Invalid) Kind() ErrorKind  { return ErrorInvalid }
+func (e NotFound) Error() string   { return string(e) }
+func (e NotFound) Kind() ErrorKind { return ErrorNotFound }
+func (e Conflict) Error() string   { return string(e) }
+func (e Conflict) Kind() ErrorKind { return ErrorConflict }
 
 // FieldError is a validation failure of one field. Its text is the cause as before
 // ("name required"); Field is the field's Name, so a form can paint it.
