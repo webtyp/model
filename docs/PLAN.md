@@ -2,8 +2,10 @@
 PLAN: "feat: ResourceOf and FeatureResource — a permission comes from its table, or is declared once by the library that owns the feature"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 593671046190705875
+PR: https://github.com/webtyp/model/pull/9
+REVIEWED_COMMIT: 06ede2fc078f464dba179cb488c723080a9cb6ba
 ---
 
 > Read AGENTS.md at the repo root before any change.
