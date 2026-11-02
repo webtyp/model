@@ -13,6 +13,10 @@ type Fields = []Field
 type Definition struct {
 	Name   string // model identity: table name, ModelName(), route key
 	Fields Fields // ordered schema; Kinds come from model (e.g. model.Text())
+	// Wire marks a transport format (a JSON-RPC message, a webhook payload):
+	// its field names are protocol, never screen text — langc does not
+	// extract them and no form is built from it.
+	Wire bool
 }
 
 // Field returns the field with the given name and true, or a zero Field and false.
@@ -23,4 +27,10 @@ func (d Definition) Field(name string) (Field, bool) {
 		}
 	}
 	return Field{}, false
+}
+
+// Wirer is implemented by the struct ormc generates from a Definition with
+// Wire: true. form.New refuses it: a transport format is never a form.
+type Wirer interface {
+	Wire() bool
 }
