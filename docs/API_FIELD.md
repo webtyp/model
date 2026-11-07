@@ -113,6 +113,7 @@ type Field struct {
     Ref       *Definition // scalar FK only. Composition uses the Kind parameter (see below).
     Exclude   bool        // field exists on the generated struct but is excluded from
                           // Pointers()/EncodeFields()/DecodeFields() — no persistence, no wire codec
+    ServerOnly bool       // only the server writes it: crud rejects it in create/update, forms hide it
     Permitted             // embedded: validation rules (characters, min/max)
 }
 
@@ -142,6 +143,26 @@ the struct needs to carry in memory but that has no business going through `Poin
 {Name: "password_hash", Type: model.FieldText, Exclude: true}
 // ormc still generates: PasswordHash string
 // but omits it from Pointers()/EncodeFields()/DecodeFields()
+```
+
+### ServerOnly
+
+`ServerOnly: true` marks a field the client may read but never write: a computed balance, the author,
+a timestamp, the tenant. `webtyp.com/crud` rejects a create or update request that carries it
+(`ErrInvalidField`) before the module runs, and `webtyp.com/form` does not render it as an input.
+The module fills it on the server (from `crud.Caller`, its own configuration or a computation).
+
+```go
+{Name: "created_by", Type: model.Text(), ServerOnly: true}
+{Name: "balance", Type: model.Int(), ServerOnly: true}
+```
+
+`ValidateFields` keeps checking every field (the server sets these before persisting and the whole
+record must still validate). `ValidateInput` is the variant for what a client sent: same rules, but
+`ServerOnly` fields are skipped, so a `NotNull` `tenant_id` that arrives empty is valid input.
+
+```go
+if err := model.ValidateInput(model.ActionCreate, rec); err != nil { return err } // crud does this
 ```
 
 ### Ref — scalar foreign key meaning

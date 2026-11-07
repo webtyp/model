@@ -121,7 +121,15 @@ type Field struct {
 	// Pointers()/EncodeFields()/DecodeFields() — no persistence, no wire codec.
 	// Use for hand-managed data the struct must carry but ormc must not touch
 	// (e.g. a password hash set via a side channel, never scanned/serialized).
-	Permitted // embedded: validation rules (characters, min/max)
+	// ServerOnly marks a field only the server writes: a computed balance, the
+	// author (created_by), a timestamp (updated_at), the tenant. It stays on the
+	// wire for reading, but a create or update request that carries it is
+	// rejected by webtyp.com/crud before the module runs, and forms do not show
+	// it as an input. The zero value (false) lets the client write the field.
+	//
+	// Example: {Name: "balance", Type: model.Int(), ServerOnly: true}
+	ServerOnly bool
+	Permitted  // embedded: validation rules (characters, min/max)
 }
 
 // IsPK returns true if the field is a Primary Key.
@@ -258,9 +266,26 @@ const (
 // This is the single validation entry point — ormc-generated Validate()
 // methods call this function first.
 func ValidateFields(action byte, f Fielder) error {
+	return validateFields(action, f, false)
+}
+
+// ValidateInput validates what a client sent: the same rules as ValidateFields,
+// except that ServerOnly fields are skipped, because the server fills them after
+// this check (a NotNull tenant_id arrives empty and is valid input). The transport
+// rejects a ServerOnly field that carries a value separately (webtyp.com/crud).
+//
+//	if err := model.ValidateInput(model.ActionCreate, rec); err != nil { return err }
+func ValidateInput(action byte, f Fielder) error {
+	return validateFields(action, f, true)
+}
+
+func validateFields(action byte, f Fielder, skipServerOnly bool) error {
 	schema := f.Schema()
 	ptrs := f.Pointers()
 	for i, field := range schema {
+		if skipServerOnly && field.ServerOnly {
+			continue
+		}
 		if field.Type == nil {
 			return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "kind required")}
 		}
