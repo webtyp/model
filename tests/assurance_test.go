@@ -17,7 +17,7 @@ func TestAssuranceZeroValueIsNone(t *testing.T) {
 
 // Enforcers compare levels with <, so the order is part of the contract.
 func TestAssuranceIsOrdered(t *testing.T) {
-	if !(AssuranceNone < AssuranceSingleFactor && AssuranceSingleFactor < AssuranceMultiFactor) {
+	if AssuranceNone >= AssuranceSingleFactor || AssuranceSingleFactor >= AssuranceMultiFactor {
 		t.Error("Assurance must order None < SingleFactor < MultiFactor")
 	}
 }

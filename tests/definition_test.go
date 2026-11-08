@@ -41,10 +41,10 @@ func TestDefinition(t *testing.T) {
 	}
 
 	// Assert that Fields is assignable from a []Field literal without conversion (alias)
-	var fields model.Fields = []model.Field{
+	checkFields := func(f model.Fields) {}
+	checkFields([]model.Field{
 		{Name: "test", Type: model.Text()},
-	}
-	_ = fields
+	})
 
 	// Assert that Kind Struct(ref) preserves the Ref pointer
 	SomeModel := &model.Definition{Name: "some"}
@@ -87,3 +87,68 @@ func TestDefinition(t *testing.T) {
 		t.Error("expected zero-value RefColumn/OnDelete to be empty")
 	}
 }
+
+func TestDefinition_AllowZeroIsClosed(t *testing.T) {
+	d := model.Definition{}
+	if d.Allow.Has(model.Read) {
+		t.Error("expected zero Allow to not have Read")
+	}
+	if d.Allow.Has(model.Create) {
+		t.Error("expected zero Allow to not have Create")
+	}
+	if d.Allow != 0 {
+		t.Errorf("expected zero Allow, got %v", d.Allow)
+	}
+}
+
+func TestDefinition_AllowHas(t *testing.T) {
+	d := model.Definition{Allow: model.Create | model.Read}
+	if !d.Allow.Has(model.Create) {
+		t.Error("expected Allow to have Create")
+	}
+	if !d.Allow.Has(model.Read) {
+		t.Error("expected Allow to have Read")
+	}
+	if d.Allow.Has(model.Delete) {
+		t.Error("expected Allow not to have Delete")
+	}
+	if d.Allow.Has(model.Update) {
+		t.Error("expected Allow not to have Update")
+	}
+}
+
+func TestKey_JoinSplitRoundTrip(t *testing.T) {
+	wire := model.JoinKey("r1", "e7")
+	if wire != "r1/e7" {
+		t.Fatalf("expected 'r1/e7', got %q", wire)
+	}
+	parts, ok := model.SplitKey(wire, 2)
+	if !ok {
+		t.Fatal("expected SplitKey to succeed")
+	}
+	if len(parts) != 2 || parts[0] != "r1" || parts[1] != "e7" {
+		t.Fatalf("unexpected parts: %v", parts)
+	}
+}
+
+func TestKey_SplitWrongCountNotOK(t *testing.T) {
+	_, ok := model.SplitKey("a/b/c", 2)
+	if ok {
+		t.Error("expected SplitKey('a/b/c', 2) to fail")
+	}
+	_, ok = model.SplitKey("a/b", 3)
+	if ok {
+		t.Error("expected SplitKey('a/b', 3) to fail")
+	}
+}
+
+func TestKey_SplitEmptyPartNotOK(t *testing.T) {
+	cases := []string{"a/", "/b", "a//b", ""}
+	for _, tc := range cases {
+		_, ok := model.SplitKey(tc, 2)
+		if ok {
+			t.Errorf("expected SplitKey(%q, 2) to fail", tc)
+		}
+	}
+}
+

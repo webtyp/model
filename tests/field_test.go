@@ -375,7 +375,7 @@ func TestReadValuesAllTypes(t *testing.T) {
 }
 
 func TestIsZeroPtrAllTypes(t *testing.T) {
-	var s string = ""
+	var s = ""
 	if !IsZeroPtr(&s, FieldText) {
 		t.Error("empty string should be zero")
 	}
@@ -390,7 +390,7 @@ func TestIsZeroPtrAllTypes(t *testing.T) {
 		t.Error("non-empty raw string should not be zero")
 	}
 
-	var i int = 0
+	var i = 0
 	if !IsZeroPtr(&i, FieldInt) {
 		t.Error("int 0 should be zero")
 	}
@@ -433,7 +433,7 @@ func TestIsZeroPtrAllTypes(t *testing.T) {
 		t.Error("float32 0 should be zero")
 	}
 
-	var b bool = false
+	var b = false
 	if !IsZeroPtr(&b, FieldBool) {
 		t.Error("bool false should be zero")
 	}
@@ -485,13 +485,13 @@ func TestReadStringPtr(t *testing.T) {
 		t.Errorf("ReadStringPtr failed: got (%q, %v), want (\"hello\", true)", val, ok)
 	}
 
-	val, ok = ReadStringPtr("not a pointer")
+	_, ok = ReadStringPtr("not a pointer")
 	if ok {
 		t.Error("ReadStringPtr should have failed for non-pointer")
 	}
 
 	var ns *string
-	val, ok = ReadStringPtr(ns)
+	_, ok = ReadStringPtr(ns)
 	if ok {
 		t.Error("ReadStringPtr should have failed for nil pointer")
 	}

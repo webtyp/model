@@ -359,3 +359,8 @@ Un permiso que ningún rol tiene convierte una ruta correctamente declarada en u
 permanente para todo el mundo, incluido el administrador, sin un solo error visible. Solo
 la pregunta inversa lo encuentra: `RolesFor(p, r, a) == []` es el hallazgo que esta API
 existe para reportar.
+
+## 12. Allow — what a table offers
+
+A table declares in `Definition.Allow` which CRUD actions it offers through the API (`model.Create | model.Read | ...`). The zero value means nothing is offered: the table is internal to its module. Read is not implied; a table that only the module reads leaves it out. This declaration replaces per-operation wire wiring: the server framework mounts only allowed operations, and UI screen generators display buttons only for what is allowed.
+

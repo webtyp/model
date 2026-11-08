@@ -63,7 +63,8 @@ The source of truth for a model is a `model.Definition` literal. This package us
 
 ```go
 var UserModel = model.Definition{
-    Name: "user",
+    Name:  "user",
+    Allow: model.Create | model.Read | model.Update,
     Fields: model.Fields{
         {Name: "id",      Type: model.Int(),  DB: &model.FieldDB{PK: true, AutoInc: true}},
         {Name: "name",    Label: "Full Name", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 2}},

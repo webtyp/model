@@ -23,3 +23,15 @@ type idGeneratorFunc func() string
 func (f idGeneratorFunc) NewID() string { return f() }
 
 var _ model.IDGenerator = idGeneratorFunc(nil)
+
+type tableSliceStub struct {
+	modelStub
+}
+
+func (s *tableSliceStub) Len() int               { return 0 }
+func (s *tableSliceStub) At(i int) model.Fielder { return nil }
+func (s *tableSliceStub) Append() model.Fielder  { return nil }
+func (s *tableSliceStub) Allow() model.Action    { return model.Read }
+
+var _ model.TableSlice = (*tableSliceStub)(nil)
+

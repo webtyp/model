@@ -191,14 +191,14 @@ func (f Field) validate(value string) error {
 
 	// Always check length if configured, regardless of character rules
 	if f.Minimum > 0 || f.Maximum > 0 {
-		if err := f.Permitted.validateLength(f.Name, value); err != nil {
+		if err := f.validateLength(f.Name, value); err != nil {
 			return err
 		}
 	}
 
 	// Only run character/substring validation if any char-rule is configured
 	if f.hasPermittedRules() {
-		return f.Permitted.validateChars(f.Name, value)
+		return f.validateChars(f.Name, value)
 	}
 	return nil
 }
