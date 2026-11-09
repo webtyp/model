@@ -48,6 +48,12 @@ type FieldDB struct {
 	Unique  bool
 	AutoInc bool
 
+	// Revision marks the integer column that counts the row's updates. crud writes 1 when the row is created, rejects an update that carries an
+	// older value (409) and writes value+1 on each update; a client never writes it directly. At most one per entity, on an Int field (definitioncheck).
+	//
+	//	{Name: "revision", Type: model.Int(), DB: &model.FieldDB{Revision: true}}
+	Revision bool
+
 	// RefColumn/OnDelete apply only when the owning Field is a scalar foreign key
 	// (Field.Ref set — composition kinds carry their ref in the constructor and
 	// never set Field.Ref; see Field.Ref doc).
@@ -137,6 +143,9 @@ func (f Field) IsPK() bool { return f.DB != nil && f.DB.PK }
 
 // IsUnique returns true if the field has a Unique constraint.
 func (f Field) IsUnique() bool { return f.DB != nil && f.DB.Unique }
+
+// IsRevision returns true if the field is the row's revision counter.
+func (f Field) IsRevision() bool { return f.DB != nil && f.DB.Revision }
 
 // IsAutoInc returns true if the field is Auto-Increment.
 func (f Field) IsAutoInc() bool { return f.DB != nil && f.DB.AutoInc }

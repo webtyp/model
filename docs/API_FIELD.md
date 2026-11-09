@@ -121,6 +121,7 @@ type FieldDB struct {
     PK        bool
     Unique  bool
     AutoInc bool
+    Revision bool // the integer column that counts the row's updates (at most one per entity)
     RefColumn string // column in Ref's table. Empty = auto-detect its PK.
     OnDelete  string // ON DELETE action. Empty = generator default (e.g. CASCADE).
 }
@@ -212,9 +213,10 @@ handle it explicitly.
 
 ```go
 type FieldDB struct {
-    PK      bool
-    Unique  bool
-    AutoInc bool
+    PK       bool
+    Unique   bool
+    AutoInc  bool
+    Revision bool
 }
 ```
 
@@ -226,6 +228,7 @@ Convenience methods to avoid nil-check boilerplate:
 func (f Field) IsPK() bool      { return f.DB != nil && f.DB.PK }
 func (f Field) IsUnique() bool   { return f.DB != nil && f.DB.Unique }
 func (f Field) IsAutoInc() bool  { return f.DB != nil && f.DB.AutoInc }
+func (f Field) IsRevision() bool { return f.DB != nil && f.DB.Revision }
 ```
 
 ## RawJSON Type

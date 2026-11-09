@@ -65,6 +65,16 @@ func main() {
 
 **Expected result:** Output `user_directory 1 true`. Checking that this declaration is valid is performed statically by `definitioncheck`.
 
+### A revision counter: two edits of the same row must not both win
+
+Mark one integer field as the row's revision and `crud` rejects an update that was made from an older read (409), while `orm` applies it only if the column still holds the value the client read:
+
+```go
+{Name: "revision", Type: model.Int(), DB: &model.FieldDB{Revision: true}}
+```
+
+`Field.IsRevision()` tells whether a field is that counter. `definitioncheck` refuses a revision that is not an integer, a second one, or the primary key.
+
 ## Documentation Map
 
 | Order | Document | What question it answers & when to read it |

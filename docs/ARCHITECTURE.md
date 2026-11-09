@@ -386,4 +386,4 @@ Every domain module declares its identity and entities in `ModuleDefinition`. Fo
 - **Fail-closed:** The zero value of `RuleMode` is undeclared and rejected by `definitioncheck`; an allowed action must explicitly declare its rule mode.
 - **Contract separation:** `model` remains purely isomorphic and contains no tooling or error strings, preventing bloat in WASM client binaries.
 - **MFA subset:** `MFA` must be a subset of `Allow`; declaring MFA for an action not permitted is refused at check time.
-
+- **Revision:** `FieldDB.Revision` marks the integer column that counts a row's updates (at most one per entity, never the primary key: judged by `definitioncheck`); `crud` writes 1 on create, bumps it on each update and rejects a stale value, `orm` applies the change only if the column still holds the value read. It is data only: `model` holds no logic for it beyond `Field.IsRevision`.
