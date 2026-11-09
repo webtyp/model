@@ -1,15 +1,38 @@
 ---
-PLAN: "feat: Definition.Allow (closed by default) and composite-key ids (KeySeparator, JoinKey, SplitKey)"
+PLAN: "feat: model.Rules, Definition.Rules/MFA and model.ModuleDefinition — the data a module declares (contracts only; the judge lives in definitioncheck)"
 EXECUTOR: antigravity
 REVIEWER: none
 ---
 
 > Read AGENTS.md at the repo root before any change.
 > **Finish by yourself:** when the delivery check passes, commit after every stage and stop. Never ask whether to
-> proceed. This plan runs **locally** and is **published as soon as the delivery check passes** (no `replace` anywhere).
+> proceed. This plan runs **locally**: do not tag, push or publish anything; the owner reviews first.
 > Never run `git reset`, `git restore`, `git checkout -- <file>` or `git stash` on your own work.
 
-# Plan: `model.Definition.Allow`
+## Goal
+
+A module's `definition.go` (the file `definitionc` reads, formerly `model.go`) declares, for **each action in `Allow`**, whether the entity has a business rule
+of its own (`AddMyBusinessRule`) or crud's checks are enough (`HaveNoBusinessRule`), which allowed actions also require a second factor (`MFA`), and the module
+itself (`ModuleDefinition`). This repo adds **only these data types** (contracts, isomorphic: they compile into the browser and the server alike).
+**No checking code lives here** (decision D44): the rule "every allowed action declares its rule" is judged by the `definitioncheck` library, which `definitionc` and `crud` call.
+`model` stays free of tooling and of the error texts that would otherwise enter the dictionary of every WASM consumer.
+
+## Ecosystem search
+
+Searched `Rules`, `ModuleDefinition`, `Entities`, `HaveNoBusinessRule`, `AddMyBusinessRule` over `webtyp/*` and `veltylabs/*` (`grep -rn`): only
+`crud.Table` hooks (the consumer, changed in its own plan) and `Definition.Allow`/`model.Allower` (`definition.go`) exist.
+Decision: **extend** `model` (the single schema repo) with data only; the judge is a new library (`definitioncheck` plan).
+
+## Design gate
+
+1. **Prior art** (unverified in this session; the owner chose the shape): Django REST `ModelViewSet` — declare the model, hook only what differs; protobuf — the schema is data,
+   the checks are a separate tool. Difference here: no `reflect`/generics, so the choice is declared as constants in a literal `definitionc` reads statically.
+2. **Novice-name test**: `model.AddMyBusinessRule` = "I write a business rule for this action"; `model.HaveNoBusinessRule` = "this action has no business rule of mine";
+   `Rules` = the rule choice per action; `ModuleDefinition.Entities` = the entities the module serves.
+3. **Ledger**: concepts +3 (`RuleMode`, `Rules`, `ModuleDefinition`); files to touch to offer an action: +1 line in `Rules` per action
+   (replaces the hand-written mount, removed in the `definitionc` plan); ways to do the same: −1 (the hand-written `MountOperations`).
+4. **Where**: `model` is the one schema repo and holds data; the judge is `definitioncheck`; `crud` and `definitionc` read these types.
+5. **Deletes**: nothing in this repo; the `definitionc` plan deletes `ops.go` mounting in every module.
 
 ## Tools
 
@@ -17,93 +40,107 @@ REVIEWER: none
 go install webtyp.com/devflow/cmd/gotest@latest
 ```
 
-## Why
+## APIs used (all inside this repo — read them before writing)
 
-Decisions D19/D20 of `webtyp/docs/ARCHITECTURE_MASTER_PLAN.md`: the framework persists a table and a module only
-declares which actions the table offers through the API. One declaration read by the server (`crud`, via code `ormc`
-generates) and by the screen (`view`), replacing `view.Ops.Allow` and the four hand-mounted operations per entity.
+| symbol | exact signature | file |
+|---|---|---|
+| `Action` | `type Action uint8`; constants `Create, Read, Update, Delete`; `AllActions` | `rbac.go:83` |
+| `Definition` | struct with `Name string`, `Fields Fields`, `Wire bool`, `Allow Action` | `definition.go:12` |
 
-## Design gate
+If a signature differs from this table, stop and name the symbol in the PR; never adapt it by guessing.
 
-1. **Prior art:** Rails `resources :posts, only: [:create, :show]` (https://guides.rubyonrails.org/routing.html#restricting-the-routes-created),
-   Laravel `Route::resource(...)->only([...])` (https://laravel.com/docs/11.x/controllers#restful-partial-resource-routes),
-   Spring Data REST `@RepositoryRestResource(exported = false)` (https://docs.spring.io/spring-data/rest/reference/customizing/configuring-the-rest-url-path.html).
-   All: a resource lists the actions it offers; the rest do not exist.
-2. **Name:** `Allow` — the word `view.Ops.Allow` already uses for the same concept; «PostModel allows create, read, update».
-3. **Ledger:** concepts ±0 (the concept moves from `view.Ops` to the model); ways to do the same thing −1 (A6.5 deletes `view.Ops.Allow`).
-4. **Where:** `model` owns `Definition` and `Action`.
-5. **Deletes:** nothing here; enables the deletions of A6.2–A6.5.
+## Stage 1 — the code (no tests: these are data types; their behaviour is judged and tested in `definitioncheck`)
 
-## Stage 1 — `definition.go`
+`definition.go`: add to `Definition`, after `Allow`:
 
 ```go
-type Definition struct {
-	Name   string
-	Fields Fields
-	Wire   bool
-	// Allow is what the table offers through the API (model.Create | model.Read | …). Zero = nothing: the table is
-	// internal to its module. Read is not implied: a table only the module reads leaves it out.
+	// Rules says, for each action in Allow, whether the entity has a business rule of its own (AddMyBusinessRule) or crud's
+	// checks are enough (HaveNoBusinessRule). An allowed action left undeclared is an error (definitioncheck), never a default.
 	//
-	//	var PostModel = model.Definition{Name: "post", Allow: model.Create | model.Read | model.Update, Fields: …}
-	Allow Action
-}
-
-// Allower is implemented by the struct ormc generates from a Definition: what the table offers through the API.
-// crud mounts only these actions and a screen shows only their buttons.
-type Allower interface {
-	Allow() Action
-}
-
-// TableSlice is a list of a table's rows that also tells what the table allows. ormc implements it on <Entity>List,
-// so a screen asking for it does not compile with a list generated before Allow existed.
-//
-//	view.NewCallerLister(caller, ops, func() model.TableSlice { return &PatientList{} })
-type TableSlice interface {
-	ModelSlice
-	Allower
-}
+	//	Rules: model.Rules{Create: model.AddMyBusinessRule, Read: model.HaveNoBusinessRule, Update: model.AddMyBusinessRule}
+	Rules Rules
+	// MFA is the set of allowed actions that also require a second factor. It must be a subset of Allow (definitioncheck).
+	//
+	//	MFA: model.Update | model.Delete
+	MFA Action
 ```
 
-Composite primary keys (D22) — add to `definition.go`:
+New file `rules.go` (no build tag, no import; compiles to WASM, no `map`):
 
 ```go
-// KeySeparator joins the values of a composite primary key into the one id a record has on the wire, in schema order.
-// A key value never contains it (crud rejects it on create).
-const KeySeparator = "/"
+package model
 
-// JoinKey is the wire id of a composite key: JoinKey("r1", "e7") == "r1/e7".
-func JoinKey(parts ...string) string
+// RuleMode is what one allowed action does about the business. The zero value means "undeclared" and is refused by definitioncheck.
+type RuleMode uint8
 
-// SplitKey is the inverse of JoinKey; ok is false when id does not have exactly n parts or a part is empty.
+const (
+	// AddMyBusinessRule: the entity has a business rule of its own, run before crud stores; definitionc creates its rule file to complete.
+	AddMyBusinessRule RuleMode = iota + 1
+	// HaveNoBusinessRule: no business rule of mine; crud validates the schema and stores, nothing to write.
+	HaveNoBusinessRule
+)
+
+// Rules declares a RuleMode per action. Each field is for the action of the same name.
+type Rules struct {
+	Create RuleMode
+	Read   RuleMode
+	Update RuleMode
+	Delete RuleMode
+}
+
+// Of returns the mode declared for exactly one action; a set of actions, or anything that is not one of the four, returns 0.
 //
-//	room, equipment, ok := …  // parts, ok := model.SplitKey("r1/e7", 2) → ["r1","e7"], true
-func SplitKey(id string, n int) (parts []string, ok bool)
+//	Rules{Create: AddMyBusinessRule}.Of(Create) // AddMyBusinessRule
+func (r Rules) Of(a Action) RuleMode {
+	switch a {
+	case Create:
+		return r.Create
+	case Read:
+		return r.Read
+	case Update:
+		return r.Update
+	case Delete:
+		return r.Delete
+	}
+	return 0
+}
 ```
-(write them with `webtyp.com/fmt` helpers, no stdlib `strings`). Tests: `TestKey_JoinSplitRoundTrip`, `TestKey_SplitWrongCountNotOK` (`SplitKey("a/b/c", 2)` → false), `TestKey_SplitEmptyPartNotOK` (`"a/"` → false).
 
-Add a check to the existing `Definition` validation used by `ormc`/tests (if `Definition` has a `Validate` or the repo
-has a definition checker; `grep -n "func (d Definition)" *.go`): `Allow != 0` together with `Wire: true` is an error —
-`ErrAllowOnWire = "model: a Wire definition is a transport format, it cannot Allow table actions; remove Allow or Wire"`.
-If no such checker exists, add none (ormc enforces it in A6.4).
+(`Of` stays here because `crud` reads it on every action at run time; it holds no error text.)
 
-## Stage 2 — tests (`tests/definition_test.go`, row in `docs/TESTS.md`)
+New file `module_definition.go`:
 
-| Test | Expected |
-|---|---|
-| `TestDefinition_AllowZeroIsClosed` | `Definition{}.Allow.Has(Read)` → false |
-| `TestDefinition_AllowHas` | `Definition{Allow: Create \| Read}.Allow.Has(Create)` → true, `.Has(Delete)` → false |
+```go
+package model
 
-## Stage 3 — documentation
+// ModuleDefinition is the one declaration of a domain module: its name and the entities it serves. definitionc generates
+// the module's operations from it; nothing else lists the module's entities.
+//
+//	var Definition = model.ModuleDefinition{Name: "patient_directory", Entities: []model.Definition{PatientModel}}
+type ModuleDefinition struct {
+	Name     string       // the module identity, e.g. "patient_directory"
+	Entities []Definition // every entity of the module, in declaration order
+}
+```
 
-`docs/ARCHITECTURE.md`: one paragraph «Allow — what a table offers», linking D20 by behaviour (no master link).
-`README.md`: add `Allow` to the `Definition` example.
+`gotest` passes (the package builds and vets; no new test). Commit: `feat: Rules, MFA and ModuleDefinition (data only)`.
+
+## Stage 2 — documentation
+
+- `README.md` (≤ 150 lines, the four ordered sections of the template in AGENTS.md): in *Why This Exists* add the Without/With of declaring
+  `Rules` (without: a hand-written mount per entity that can be forgotten; with: one line per action); in *Step-by-Step Guide* add a compilable
+  `ModuleDefinition` + `Rules` example; say that checking a declaration is the job of `definitioncheck`.
+- `docs/ARCHITECTURE.md`: a section on `Rules`/`ModuleDefinition` in the four-section format; state that `definitioncheck` judges them and `crud` and `definitionc` consume them.
+- Do not link `docs/PLAN.md` from permanent docs.
 
 ## Delivery check
 
-`gotest`. A tree that does not compile or whose tests did not run is a failed delivery.
+1. `gotest` (builds, vets, runs; a PR that does not compile, or whose tests could not run, is a failed delivery).
+2. `git diff --stat main` lists only: `definition.go`, `rules.go`, `module_definition.go`, `README.md`, `docs/ARCHITECTURE.md`.
+3. `grep -rn "interface{}\|\bany\b\|webtyp.com/fmt\|func.*Check" rules.go module_definition.go` → empty (typed, no imports, no checking code).
+4. `lang.json` is unchanged (this plan adds no text).
 
-| Stage | Files |
-|---|---|
-| 1 | `definition.go` |
-| 2 | `tests/definition_test.go`, `docs/TESTS.md` |
-| 3 | `docs/ARCHITECTURE.md`, `README.md` |
+| Stage | Files | Commit |
+|---|---|---|
+| 1 | `definition.go`, `rules.go`, `module_definition.go` | `feat: …` |
+| 2 | `README.md`, `docs/ARCHITECTURE.md` | `docs: …` |

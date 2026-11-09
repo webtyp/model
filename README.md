@@ -1,204 +1,76 @@
 # webtyp/model
 <img src="docs/img/badges.svg">
 
-Core schema, validation, and codec types for webtyp ecosystem. This package provides the foundational interfaces and types used across ORM, JSON serialization, form handling, and API layers.
+Core schema, validation, and codec types for the webtyp ecosystem.
 
-## Overview
+## Why This Exists
 
-`model` provides the foundational type definitions and contracts for the webtyp ecosystem. It focuses on:
+`model` provides the single source of truth for schemas, validation, and serialization contracts. Without it, each domain module repeats manual mounts and wire contracts that can be forgotten or drift. With `model`, entities declare their schema, allowed actions, business rule modes, and MFA requirements as pure data that generators (`definitionc`) and harnesses (`crud`) consume.
 
-- **Schema Metadata** - `Field`, `Fielder`, and `FieldType` for reflection-less struct introspection
-- **Validation** - `Permitted` and `Validator` for data integrity
-- **Typed Serialization** - `Encodable`, `Decodable`, `FieldWriter`, `FieldReader` for 0-alloc codec patterns
+| Without | With |
+|---|---|
+| A hand-written mount per entity that can be forgotten | One line per action in `Rules` (`AddMyBusinessRule` / `HaveNoBusinessRule`) |
+| Fragile string tags (`input:"required"`) with runtime failures | Typed `model.Definition` with compile-time symbol checking |
+| Reflection and `map` in serialization | Zero-alloc typed codecs ([`Encodable`](docs/API_CODEC.md)/[`Decodable`](docs/API_CODEC.md)) compiling to WASM |
+| Ad-hoc validation logic in every handler | Fail-closed validation contracts ([`Permitted`](docs/API_PERMITTED.md)) on each field |
 
-## Key Features
+Checking a declaration's validity (e.g. that every allowed action declares its rule mode and MFA is a subset of `Allow`) is the job of [`webtyp.com/definitioncheck`](../definitioncheck/).
 
-- 📐 **Model Definition** - Author schemas manually with `Definition` and `Fields`
-- 🏗️ **Schema-first design** - Describe struct fields without reflection
-- ✅ **Validation by contract** - Character whitelists, length constraints, custom validators
-- 🔄 **Typed codecs** - `Encodable`/`Decodable` for 0-alloc serialization
-- 🧵 **Concurrency safe** - Thread-safe schema metadata and codecs
-- 📦 **Zero dependencies** - No reflection, no maps, no `any` boxing in codec paths
-- ⚡ **WebAssembly optimized** - Small binary footprint for WASM targets
+## Before You Start
 
-## Errors
+- **Isomorphic package**: compiles to WebAssembly with TinyGo. No `reflect`, no `map`, no stdlib `fmt`/`strings` (use `webtyp.com/fmt`).
+- **Data contracts only**: `model` defines data structures (`Rules`, `ModuleDefinition`, `Definition`). Validation tooling lives in `definitioncheck`.
+- **AST introspection**: generators like `definitionc` parse `Definition` literals statically from source files.
 
-The package defines a vocabulary for error kinds (reasons an operation failed) through four predefined kinds: `ErrorInternal`, `ErrorInvalid`, `ErrorNotFound`, and `ErrorConflict`.
+## Step-by-Step Guide
 
-Modules declare refusals using constants:
-```go
-const ErrNotFound model.NotFound = "service not found"
-```
+### Step 1: Declare an Entity with Rules and Module Definition
 
-- `model.KindOf(err)` returns the kind of an error.
-- `model.FieldOf(err)` returns the specific field name the validation error occurred on.
-- Both work the same on the server and in the browser: any error with `Kind()` (`Kinded`) or `FailedField()` (`Fielded`) answers them — the `rpc` client's error does, so a screen never needs to know the transport.
-- An unclassified error (zero value) is `ErrorInternal`: never shown to the user.
-
-## RBAC (Access Control)
-
-The package provides a vocabulary for role-based access control, ensuring that the resource that protects a module is strongly typed.
+**Goal:** Define a typed entity with explicit CRUD permissions, rule modes, MFA protection, and register it in a module definition.
 
 ```go
-// A permission derived from a table (its Definition)
-res := model.ResourceOf(&ServiceModel)
+package main
 
-// A permission for a feature that is not a table
-var ResourceDiagram = model.FeatureResource("database_diagram")
-```
+import (
+	"webtyp.com/fmt"
+	"webtyp.com/model"
+)
 
-Step 3 will make a plain string stop compiling. Use these two constructors exclusively.
-
-## Installation
-
-```bash
-go get webtyp.com/model
-```
-
-## Quick Start
-
-### Defining a Model Definition
-
-The source of truth for a model is a `model.Definition` literal. This package uses **fail-closed validation**: validation used to be opt-in (`Widget: nil` meant no validation), which contradicted the ecosystem's design doctrine. Now, every field has a `Type` (Kind) that provides a baseline validation floor.
-
-```go
 var UserModel = model.Definition{
-    Name:  "user",
-    Allow: model.Create | model.Read | model.Update,
-    Fields: model.Fields{
-        {Name: "id",      Type: model.Int(),  DB: &model.FieldDB{PK: true, AutoInc: true}},
-        {Name: "name",    Label: "Full Name", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 2}},
-        {Name: "email",   Help: "Format: name@example.com", Type: model.Text(), NotNull: true},
-        {Name: "address", Type: model.Struct(&AddressModel)}, // composition
-        {Name: "staff_id", Type: model.Int(), Ref: &StaffModel,
-            DB: &model.FieldDB{RefColumn: "id"}}, // scalar FK: Go type stays int64
-    },
+	Name:  "user",
+	Allow: model.Create | model.Read | model.Update,
+	Rules: model.Rules{
+		Create: model.AddMyBusinessRule,
+		Read:   model.HaveNoBusinessRule,
+		Update: model.AddMyBusinessRule,
+	},
+	MFA: model.Update,
+	Fields: model.Fields{
+		{Name: "id", Type: model.Int(), DB: &model.FieldDB{PK: true, AutoInc: true}},
+		{Name: "name", Label: "Full Name", Type: model.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 2}},
+		{Name: "email", Label: "Email", Type: model.Text(), NotNull: true},
+	},
+}
+
+var UserModule = model.ModuleDefinition{
+	Name:     "user_directory",
+	Entities: []model.Definition{UserModel},
+}
+
+func main() {
+	mode := UserModel.Rules.Of(model.Create)
+	fmt.Println(UserModule.Name, len(UserModule.Entities), mode == model.AddMyBusinessRule)
 }
 ```
 
-**Why fail-closed?** Validation is no longer optional. A resource left reachable because nobody explicitly configured a widget is a silent failure. Standard kinds like `model.Text()` provide an input-boundary XSS floor by default. Use `model.Raw()` or `model.Blob()` only when you explicitly need an unvalidated escape hatch — these are easily auditable via grep.
+**Expected result:** Output `user_directory 1 true`. Checking that this declaration is valid is performed statically by `definitioncheck`.
 
-**Label and Help texts:** `Label` and `Help` are English texts; they are the translation key — never write another language here. Instructions go in `Help`, never in a placeholder.
+## Documentation Map
 
-### List items and select options
-
-A list item (label, description, badge) and the options for a select are declared on the fields:
-
-```go
-{Name: "name", Type: input.Text(), Label: "Name", Item: model.ItemLabel},
-{Name: "sku", Type: input.Text(), Label: "SKU", Item: model.ItemDescription},
-{Name: "zone_id", Type: input.Select(), Label: "Zone", Options: &ZoneModel}, // options without a foreign key
-```
-
-`ormc` generates `func (m *X) Item() model.Item` from these marks, calling `JoinItem` when several fields are marked `ItemDescription`, and validates them at generation time with `ValidateItem`.
-
-### Instants: `UnixTime()` and `NanoTime()`
-
-A field that holds an instant declares its unit: `model.UnixTime()` for a date or a deadline (seconds) and
-`model.NanoTime()` for the moment an event happened (nanoseconds). Both are stored as integer columns, so backends and
-codecs treat them like `Int()`; `ormc` generates them as `webtyp.com/time.Unix` and `time.Nano`, so assigning one unit
-to the other does not compile. Never declare an instant as `model.Int()`.
-
-```go
-{Name: "expires_at", Type: model.UnixTime()},
-{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true},
-```
-
-### The generated Schema
-
-`ormc` reads the `Definition` var and generates the row struct plus the
-`Fielder` methods. The schema is authored **once**: the generated `Schema()`
-points back at the `Definition` — it never re-emits the field literals.
-
-```go
-// Generated by ormc from UserModel — do not edit.
-
-type User struct {
-    ID   int64
-    Name string
-}
-
-func (u *User) Schema() []model.Field { return UserModel.Fields } // single source of truth
-
-func (u *User) Pointers() []any { return []any{&u.ID, &u.Name} }
-
-func (u *User) Validate(action byte) error {
-    return model.ValidateFields(action, u)
-}
-```
-
-The struct exists because the ecosystem forbids `reflect`: something concrete
-must map row fields to `Schema()`/`Pointers()`/codec, and that something is
-generated, not hand-written. The only case where `Schema()` does not return
-`XModel.Fields` directly is when the Definition has `Exclude: true` fields:
-`Schema()` and `Pointers()` are parallel arrays, so ormc emits one filtered
-`_schemaX` var with the excluded fields dropped from both.
-
-Usage:
-
-```go
-err := model.ValidateFields(model.ActionUpdate, user)
-```
-
-### Using the Codec
-
-Generated `EncodeFields` and `DecodeFields` methods follow the typed codec pattern:
-
-```go
-func (u *User) EncodeFields(w model.FieldWriter) {
-    w.String("id", u.ID)
-    if u.Name != "" {
-        w.String("name", u.Name)
-    }
-    w.Int("age", int64(u.Age))
-}
-
-func (u *User) DecodeFields(r model.FieldReader) {
-    if id, ok := r.String("id"); ok {
-        u.ID = id
-    }
-    if name, ok := r.String("name"); ok {
-        u.Name = name
-    }
-    if age, ok := r.Int("age"); ok {
-        u.Age = int(age)
-    }
-}
-```
-
-## Documentation
-
-- [Field and Fielder API](docs/API_FIELD.md) - Schema metadata and reflection-less access
-- [Codec API](docs/API_CODEC.md) - Typed serialization contract (0-alloc)
-- [Why 64-bit Only](docs/WHY_64BIT_ONLY.md) - Rationale for `int64`/`float64` as the only numeric types
-- [Codec vs Field/Fielder](docs/CODEC_AND_FIELDER.md) - Architectural separation and roles
-- [Permitted Validation](docs/API_PERMITTED.md) - Character whitelists and length constraints
-
-## Architecture
-
-**Separation of Concerns:**
-
-| Concern | Type | Used By |
-|---------|------|---------|
-| **DDL & Column Metadata** | `Field.DB` | `orm`, `sqlt`, `postgres` |
-| **Data Validation** | `Field.Type` + `Permitted` | `orm`, `form`, `json` |
-| **UI Bindings** | `Field.Type` (Kind) | `form`, `ormc` codegen |
-| **SQL Scanning** | `Pointers()` | `orm/qb` (positional via `database/sql`) |
-| **Serialization** | `Encodable`/`Decodable` + codec | `json`, `jsvalue`, transports |
-
-One schema (`Field`) serves all layers. Serialization uses the typed codec (`Encodable`/`Decodable`) for 0-alloc, map-free performance.
-
-## Related Packages
-
-- [`webtyp/fmt`](../fmt/) - String manipulation and conversion
-- [`webtyp/orm`](../orm/) - Database layer (uses `Schema()`, `Pointers()`, `Validate()`)
-- [`webtyp/json`](../json/) - JSON encoder/decoder (uses codec)
-- [`webtyp/form`](../form/) - Form handling (uses `Field` + `Kind`)
-
----
-
-## [Contributing](https://github.com/webtyp/contributing)
-
----
-
-## [License](LICENSE)
+| Order | Document | What question it answers & when to read it |
+|---|---|---|
+| 1 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Architectural decisions, no-reflection constraints, and rules |
+| 2 | [`docs/API_FIELD.md`](docs/API_FIELD.md) | Field kinds, schema metadata, and reflection-less struct introspection |
+| 3 | [`docs/API_CODEC.md`](docs/API_CODEC.md) | Zero-allocation typed serialization contracts (`Encodable`/`Decodable`) |
+| 4 | [`docs/API_PERMITTED.md`](docs/API_PERMITTED.md) | Validation contracts, character whitelists, and length constraints |
+| 5 | [`docs/WHY_64BIT_ONLY.md`](docs/WHY_64BIT_ONLY.md) | Rationale for `int64` and `float64` as standard numeric types |

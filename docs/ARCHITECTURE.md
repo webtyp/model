@@ -364,3 +364,26 @@ existe para reportar.
 
 A table declares in `Definition.Allow` which CRUD actions it offers through the API (`model.Create | model.Read | ...`). The zero value means nothing is offered: the table is internal to its module. Read is not implied; a table that only the module reads leaves it out. This declaration replaces per-operation wire wiring: the server framework mounts only allowed operations, and UI screen generators display buttons only for what is allowed.
 
+## 13. Rules and ModuleDefinition — domain rules by declaration
+
+### 1. Overview in One Minute
+Every domain module declares its identity and entities in `ModuleDefinition`. For each entity, `Definition.Allow` defines what CRUD actions are exposed, and `Definition.Rules` declares whether each allowed action has a custom business rule (`AddMyBusinessRule`) or standard storage is sufficient (`HaveNoBusinessRule`). `Definition.MFA` specifies which allowed actions require second-factor authentication. `model` holds pure data contracts only; checking declarations is judged by `definitioncheck`, while `crud` and `definitionc` consume them.
+
+### 2. Repository Pieces & Responsibilities
+- `model.Rules` and `model.RuleMode`: data contracts declaring the rule mode (`AddMyBusinessRule` or `HaveNoBusinessRule`) per action.
+- `model.ModuleDefinition`: the declaration of a domain module name and its slice of entity definitions.
+- `webtyp.com/definitioncheck`: the judge that validates that every allowed action declares its rule, that MFA actions are a subset of Allow, and that rule declarations are consistent.
+- `webtyp.com/definitionc`: code generator reading `ModuleDefinition` to generate operations, wire mounts, and rule skeletons.
+- `webtyp.com/crud`: runtime execution harness enforcing permissions, schema validation, and dispatching to declared business rules.
+
+### 3. Step-by-Step Flow
+1. **Declaration:** A module declares `var Definition = model.ModuleDefinition{Name: "...", Entities: [...]}` with typed `Rules` and `MFA` per entity in `definition.go`.
+2. **Static check:** Tooling and tests run `definitioncheck.CheckModule(Definition)` to verify contracts statically without runtime reflection.
+3. **Generation:** `definitionc` generates `definition_gen.go` mounting operations and scaffolding `rule_<entity>_<action>.go` for actions declaring `AddMyBusinessRule`.
+4. **Execution:** At runtime, `crud` checks `Rules.Of(action)`: executes `AddMyBusinessRule` through the typed handler or performs `HaveNoBusinessRule` directly.
+
+### 4. Security Boundaries & Invariants
+- **Fail-closed:** The zero value of `RuleMode` is undeclared and rejected by `definitioncheck`; an allowed action must explicitly declare its rule mode.
+- **Contract separation:** `model` remains purely isomorphic and contains no tooling or error strings, preventing bloat in WASM client binaries.
+- **MFA subset:** `MFA` must be a subset of `Allow`; declaring MFA for an action not permitted is refused at check time.
+

@@ -24,6 +24,15 @@ type Definition struct {
 	//
 	//	var PostModel = model.Definition{Name: "post", Allow: model.Create | model.Read | model.Update, Fields: …}
 	Allow Action
+	// Rules says, for each action in Allow, whether the entity has a business rule of its own (AddMyBusinessRule) or crud's
+	// checks are enough (HaveNoBusinessRule). An allowed action left undeclared is an error (definitioncheck), never a default.
+	//
+	//	Rules: model.Rules{Create: model.AddMyBusinessRule, Read: model.HaveNoBusinessRule, Update: model.AddMyBusinessRule}
+	Rules Rules
+	// MFA is the set of allowed actions that also require a second factor. It must be a subset of Allow (definitioncheck).
+	//
+	//	MFA: model.Update | model.Delete
+	MFA Action
 }
 
 // Allower is implemented by the struct ormc generates from a Definition: what the table offers through the API.

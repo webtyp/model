@@ -29,14 +29,14 @@ Working notes for AI agents operating in this repository. End-user docs: [README
 
 The single schema of the webtyp ecosystem: `model.Definition`, `model.Field`, `Kind`, `Permitted`,
 the typed codec interfaces. One `Field` serves DDL (`orm`, `postgres`), validation, wire codecs and UI
-(`form`). `ormc` reads `Definition` literals statically (AST) to generate code.
+(`form`). `definitionc` reads `Definition` literals statically (AST) to generate code.
 
 ## This package compiles to WASM
 
 - Do NOT import `strings`, `strconv`, `errors` or stdlib `fmt`; use `webtyp.com/fmt`.
 - No `map`, no `reflect` in code that reaches WASM.
 - A new `Field` key must stay a plain literal-friendly value (string, bool, pointer to a literal
-  struct): `ormc` parses `Definition` literals from source and ignores keys it does not know.
+  struct): `definitionc` parses `Definition` literals from source and ignores keys it does not know.
 
 ## The build that defines "done"
 
