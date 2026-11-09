@@ -102,15 +102,49 @@ func (a Action) Has(want Action) bool {
 	return a&want == want
 }
 
-// actionLetters maps each verb to the character it is stored and logged as, in CRUD order.
+// The word of each action, as it appears in a rule file name, a tool name or a queued operation.
+const (
+	verbCreate = "create"
+	verbRead   = "read"
+	verbUpdate = "update"
+	verbDelete = "delete"
+)
+
+// actionLetters maps each action to the character it is stored and logged as and to its word, in CRUD order.
 var actionLetters = [...]struct {
 	action Action
 	letter byte
+	verb   string
 }{
-	{Create, 'c'},
-	{Read, 'r'},
-	{Update, 'u'},
-	{Delete, 'd'},
+	{Create, 'c', verbCreate},
+	{Read, 'r', verbRead},
+	{Update, 'u', verbUpdate},
+	{Delete, 'd', verbDelete},
+}
+
+// Verb is the action as a word: Create -> "create". A set of actions, or none, has no word and returns "".
+//
+//	rule := "rule_patient_" + model.Create.Verb() + ".go" // rule_patient_create.go
+func (a Action) Verb() string {
+	for _, al := range actionLetters {
+		if a == al.action {
+			return al.verb
+		}
+	}
+	return ""
+}
+
+// ParseVerb reads back what Verb wrote: "update" -> Update, true. Anything else (another case, a
+// letter, an invented verb) is 0, false: the vocabulary is closed.
+//
+//	action, ok := model.ParseVerb("read") // model.Read, true
+func ParseVerb(verb string) (Action, bool) {
+	for _, al := range actionLetters {
+		if verb == al.verb {
+			return al.action, true
+		}
+	}
+	return 0, false
 }
 
 // String renders the set as the CRUD letters: Read -> "r", Read|Update -> "ru",

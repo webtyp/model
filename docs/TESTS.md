@@ -85,3 +85,7 @@
 | [TestVector_ValidateEmpty](../tests/vector_test.go) | Vector ValidateEmpty |
 | [TestVector_ZeroPtr](../tests/vector_test.go) | Vector ZeroPtr |
 | [TestBlob_StillNotDimensional](../tests/vector_test.go) | Blob StillNotDimensional |
+| [TestVerb_OfEachAction](../tests/verb_test.go) | Verb OfEachAction |
+| [TestVerb_OfASetOrNothingIsEmpty](../tests/verb_test.go) | Verb OfASetOrNothingIsEmpty |
+| [TestParseVerb_RoundTrips](../tests/verb_test.go) | ParseVerb RoundTrips |
+| [TestParseVerb_UnknownIsNotAnAction](../tests/verb_test.go) | ParseVerb UnknownIsNotAnAction |
