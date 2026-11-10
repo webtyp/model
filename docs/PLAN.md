@@ -3,8 +3,10 @@ PLAN: "feat: model.ExternalCallDefinition and Definition.ExternalCalls — an en
 TAG: v0.2.19
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 5139394750224033379
+PR: https://github.com/webtyp/model/pull/10
+REVIEWED_COMMIT: a5dfb579caf25c59d20a5cf7dd6023df4b0d165c
 ---
 
 > Read AGENTS.md at the repo root before any change.

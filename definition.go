@@ -33,6 +33,11 @@ type Definition struct {
 	//
 	//	MFA: model.Update | model.Delete
 	MFA Action
+	// ExternalCalls are the calls to other systems that a rule of this entity may ask for, each with its mode and limits written out.
+	// Names are unique within the entity; ValidateExternalCalls checks them.
+	//
+	//	ExternalCalls: []model.ExternalCallDefinition{{Name: "charge", Mode: model.WaitForReply, MaxWaitSeconds: 10}}
+	ExternalCalls []ExternalCallDefinition
 }
 
 // Allower is implemented by the struct ormc generates from a Definition: what the table offers through the API.
