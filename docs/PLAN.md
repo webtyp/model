@@ -3,6 +3,8 @@ PLAN: "feat: model.ExternalCallDefinition and Definition.ExternalCalls — an en
 TAG: v0.2.19
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 5139394750224033379
 ---
 
 > Read AGENTS.md at the repo root before any change.
