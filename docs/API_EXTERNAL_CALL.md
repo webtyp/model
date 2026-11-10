@@ -10,9 +10,9 @@ nothing runs these calls yet: `crud` and `externalcalls` do, in later releases
 
 `ExternalCallMode` says what a rule waits for when it asks for an external call.
 
-- **WaitForReply**: the request waits for the provider's answer, up to `MaxWaitSeconds`. If the time runs out the call stays queued and the background runner finishes it.
+- **WaitForReply**: the request waits for the provider's answer, up to `MaxWaitSeconds`. If the time runs out the call fails: it is never retried in the background (D60) and the record is kept.
 - **RetryInBackground**: the request answers at once and the call is retried in the background, at most `MaxAttempts` times.
-- **WaitForConfirmation**: the call stays queued until the provider confirms it; there is no time limit here.
+- **WaitForConfirmation**: the call stays queued until the provider confirms or rejects it; there is no time limit here and it is never retried in the background (D60).
 
 ### Example Usage
 
