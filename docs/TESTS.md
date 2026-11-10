@@ -90,3 +90,13 @@
 | [TestParseVerb_RoundTrips](../tests/verb_test.go) | ParseVerb RoundTrips |
 | [TestParseVerb_UnknownIsNotAnAction](../tests/verb_test.go) | ParseVerb UnknownIsNotAnAction |
 | [TestField_IsRevision](../tests/field_revision_test.go) | Field IsRevision |
+| [TestExternalCallMode_ZeroValueIsUndeclared](../tests/external_call_test.go) | ExternalCallMode_ZeroValueIsUndeclared |
+| [TestExternalCall_WaitForReplyNeedsMaxWait](../tests/external_call_test.go) | ExternalCall_WaitForReplyNeedsMaxWait |
+| [TestExternalCall_RetryInBackgroundNeedsMaxAttempts](../tests/external_call_test.go) | ExternalCall_RetryInBackgroundNeedsMaxAttempts |
+| [TestExternalCall_WaitForConfirmationHasNoLimits](../tests/external_call_test.go) | ExternalCall_WaitForConfirmationHasNoLimits |
+| [TestExternalCall_LimitOfOtherModeRejected](../tests/external_call_test.go) | ExternalCall_LimitOfOtherModeRejected |
+| [TestExternalCall_NameRequired](../tests/external_call_test.go) | ExternalCall_NameRequired |
+| [TestExternalCall_ModeUndeclared](../tests/external_call_test.go) | ExternalCall_ModeUndeclared |
+| [TestDefinition_ValidateExternalCalls](../tests/external_call_test.go) | Definition_ValidateExternalCalls |
+| [TestDefinition_DuplicateExternalCallName](../tests/external_call_test.go) | Definition_DuplicateExternalCallName |
+| [TestDefinition_ExternalCallErrorsAreInvalid](../tests/external_call_test.go) | Definition_ExternalCallErrorsAreInvalid |

@@ -375,6 +375,7 @@ Every domain module declares its identity and entities in `ModuleDefinition`. Fo
 - `webtyp.com/definitioncheck`: the judge that validates that every allowed action declares its rule, that MFA actions are a subset of Allow, and that rule declarations are consistent.
 - `webtyp.com/definitionc`: code generator reading `ModuleDefinition` to generate operations, wire mounts, and rule skeletons.
 - `webtyp.com/crud`: runtime execution harness enforcing permissions, schema validation, and dispatching to declared business rules.
+- `external_call.go`: data contracts declaring the external calls its rules may ask for, with mode and limits.
 
 ### 3. Step-by-Step Flow
 1. **Declaration:** A module declares `var Definition = model.ModuleDefinition{Name: "...", Entities: [...]}` with typed `Rules` and `MFA` per entity in `definition.go`.

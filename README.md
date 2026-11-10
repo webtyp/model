@@ -84,3 +84,4 @@ Mark one integer field as the row's revision and `crud` rejects an update that w
 | 3 | [`docs/API_CODEC.md`](docs/API_CODEC.md) | Zero-allocation typed serialization contracts (`Encodable`/`Decodable`) |
 | 4 | [`docs/API_PERMITTED.md`](docs/API_PERMITTED.md) | Validation contracts, character whitelists, and length constraints |
 | 5 | [`docs/WHY_64BIT_ONLY.md`](docs/WHY_64BIT_ONLY.md) | Rationale for `int64` and `float64` as standard numeric types |
+| 6 | [`docs/API_EXTERNAL_CALL.md`](docs/API_EXTERNAL_CALL.md) | External call declarations for entities |
