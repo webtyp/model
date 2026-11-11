@@ -115,3 +115,6 @@ func TestNotNull_IntStillRejectsZero(t *testing.T) {
 ## Delivery check
 
 `gotest` passes on every destination; the three tests exist with their rows; the pull request is open. A tree that does not compile or whose tests did not run is a failed delivery.
+## Executor notes
+
+Everything has been implemented according to the plan.

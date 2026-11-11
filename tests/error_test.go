@@ -1,6 +1,7 @@
 package model_test
 
 import (
+	"errors"
 	"testing"
 	"webtyp.com/fmt"
 	"webtyp.com/model"
@@ -124,5 +125,13 @@ func (fieldReporter) FailedField() string { return "name" }
 func TestFieldOf_AnyErrorThatNamesItsField(t *testing.T) {
 	if got := model.FieldOf(fieldReporter{}); got != "name" {
 		t.Errorf("FieldOf = %q, want %q", got, "name")
+	}
+}
+
+func TestFieldError_UnwrapsItsCause(t *testing.T) {
+	cause := errors.New("email registered")
+	var err error = &model.FieldError{Field: "email", Err: cause}
+	if !errors.Is(err, cause) {
+		t.Fatal("errors.Is must see the cause through a FieldError")
 	}
 }

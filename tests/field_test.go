@@ -679,3 +679,43 @@ func TestNilRefBackstop(t *testing.T) {
 		})
 	}
 }
+
+type flagRec struct{ Active bool }
+
+func (r *flagRec) IsNil() bool { return r == nil }
+func (r *flagRec) Schema() []Field {
+	return []Field{{Name: "active", Type: Bool(), NotNull: true}}
+}
+func (r *flagRec) Pointers() []any                     { return []any{&r.Active} }
+func (r *flagRec) EncodeFields(w FieldWriter)    { w.Bool("active", r.Active) }
+func (r *flagRec) DecodeFields(rd FieldReader) {
+	if v, ok := rd.Bool("active"); ok {
+		r.Active = v
+	}
+}
+
+type countRec struct{ N int64 }
+
+func (r *countRec) IsNil() bool { return r == nil }
+func (r *countRec) Schema() []Field {
+	return []Field{{Name: "n", Type: Int(), NotNull: true}}
+}
+func (r *countRec) Pointers() []any                  { return []any{&r.N} }
+func (r *countRec) EncodeFields(w FieldWriter) { w.Int("n", r.N) }
+func (r *countRec) DecodeFields(rd FieldReader) {
+	if v, ok := rd.Int("n"); ok {
+		r.N = v
+	}
+}
+
+func TestNotNull_BoolAcceptsFalse(t *testing.T) {
+	if err := ValidateFields(ActionCreate, &flagRec{Active: false}); err != nil {
+		t.Fatalf("false is a value, NotNull must accept it: %v", err)
+	}
+}
+
+func TestNotNull_IntStillRejectsZero(t *testing.T) {
+	if err := ValidateFields(ActionCreate, &countRec{N: 0}); err == nil {
+		t.Fatal("NotNull on an int must still reject zero")
+	}
+}

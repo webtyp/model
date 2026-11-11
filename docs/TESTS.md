@@ -100,3 +100,6 @@
 | [TestDefinition_ValidateExternalCalls](../tests/external_call_test.go) | Definition_ValidateExternalCalls |
 | [TestDefinition_DuplicateExternalCallName](../tests/external_call_test.go) | Definition_DuplicateExternalCallName |
 | [TestDefinition_ExternalCallErrorsAreInvalid](../tests/external_call_test.go) | Definition_ExternalCallErrorsAreInvalid |
+| [TestFieldError_UnwrapsItsCause](../tests/error_test.go) | UnwrapsItsCause |
+| [TestNotNull_BoolAcceptsFalse](../tests/field_test.go) | BoolAcceptsFalse |
+| [TestNotNull_IntStillRejectsZero](../tests/field_test.go) | IntStillRejectsZero |
