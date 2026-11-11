@@ -2,8 +2,10 @@
 PLAN: "fix: model.FieldError unwraps its cause; NotNull on a Bool field accepts false"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 11594222981559106768
+PR: https://github.com/webtyp/model/pull/11
+REVIEWED_COMMIT: 903531d065a307007ce56ef272dfcab504efb79c
 ---
 
 > Read AGENTS.md at the repo root before any change.
