@@ -2,6 +2,8 @@
 PLAN: "fix: model.FieldError unwraps its cause; NotNull on a Bool field accepts false"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 11594222981559106768
 ---
 
 > Read AGENTS.md at the repo root before any change.
