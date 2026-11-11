@@ -61,6 +61,9 @@ func (e *FieldError) Error() string       { return e.Err.Error() }
 func (e *FieldError) Kind() ErrorKind     { return ErrorInvalid }
 func (e *FieldError) FailedField() string { return e.Field }
 
+// Unwrap answers the cause, so errors.Is and errors.As see through the field.
+func (e *FieldError) Unwrap() error { return e.Err }
+
 // Fielded is an error that knows which field failed: a FieldError on the server,
 // the rpc client's error in the browser.
 type Fielded interface {

@@ -97,7 +97,7 @@ type Field struct {
 	// and disappears while typing). Empty → no help is shown.
 	Help      string
 	Type      Kind
-	NotNull   bool
+	NotNull   bool // false is a value: NotNull on a bool only means the column is NOT NULL
 	OmitEmpty bool     // omit from JSON when zero value
 	DB        *FieldDB // nil for formonly/transport structs
 	// Ref is the Definition of the table this column references (scalar foreign key).
@@ -354,7 +354,7 @@ func validateFields(action byte, f Fielder, skipServerOnly bool) error {
 				return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "required")}
 			}
 			// Non-text fields: only check NotNull (zero value check)
-			if field.NotNull && IsZeroPtr(ptrs[i], ft) {
+			if field.NotNull && ft != FieldBool && IsZeroPtr(ptrs[i], ft) { // false is a value: NotNull on a bool only means the column is NOT NULL
 				return &FieldError{Field: field.Name, Err: fmt.Err(field.Name, "required")}
 			}
 		}
