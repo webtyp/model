@@ -97,7 +97,7 @@ type Field struct {
 	// and disappears while typing). Empty → no help is shown.
 	Help      string
 	Type      Kind
-	NotNull   bool // false is a value: NotNull on a bool only means the column is NOT NULL
+	NotNull   bool     // false is a value: NotNull on a bool only means the column is NOT NULL
 	OmitEmpty bool     // omit from JSON when zero value
 	DB        *FieldDB // nil for formonly/transport structs
 	// Ref is the Definition of the table this column references (scalar foreign key).
@@ -123,7 +123,18 @@ type Field struct {
 	// when the field is NOT a foreign key; a foreign key says it with Ref, which
 	// fills the choices too. Setting both is an error (ValidateItem).
 	Options *Definition
-	Exclude bool // field exists on the generated struct but is NOT part of
+	// AlsoSetsField is the name of ANOTHER field of this definition that this
+	// field's input also sets when the person commits it: an age typed in a
+	// birthdate also sets "estimated". The input decides the value (it must
+	// implement input.AlsoSetter); form fails at New if it does not, or if the
+	// named field does not exist. Empty → the field sets nothing else.
+	//
+	// Example: {Name: "birthdate", Type: agedate.New(), AlsoSetsField: "birthdate_estimated"}
+	AlsoSetsField string
+	// ShownWhen shows this field only while another field holds one of the
+	// listed values (see When). The zero value always shows it.
+	ShownWhen When
+	Exclude   bool // field exists on the generated struct but is NOT part of
 	// Pointers()/EncodeFields()/DecodeFields() — no persistence, no wire codec.
 	// Use for hand-managed data the struct must carry but ormc must not touch
 	// (e.g. a password hash set via a side channel, never scanned/serialized).

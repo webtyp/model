@@ -103,3 +103,5 @@
 | [TestFieldError_UnwrapsItsCause](../tests/error_test.go) | UnwrapsItsCause |
 | [TestNotNull_BoolAcceptsFalse](../tests/field_test.go) | BoolAcceptsFalse |
 | [TestNotNull_IntStillRejectsZero](../tests/field_test.go) | IntStillRejectsZero |
+| [TestWhenZeroAlwaysHolds](../tests/when_test.go) | A zero `model.When` always shows its field. |
+| [TestWhenHoldsOnlyForListedValues](../tests/when_test.go) | `model.When` shows the field only for the listed values of the other field; any other value, including empty, hides it. |

@@ -106,6 +106,8 @@ type Field struct {
     Name      string
     Label     string      // English display text; translation key. Empty = derive from Name.
     Help      string      // English instructions; translation key. Empty = no help shown.
+    AlsoSetsField string  // another field this field's input also sets when committed (input.AlsoSetter)
+    ShownWhen When        // show this field only while another field holds one of the listed values
     Type      Kind
     NotNull   bool
     OmitEmpty bool        // omit from JSON when JSON zero value
@@ -132,7 +134,14 @@ type FieldDB struct {
 `Label` and `Help` are texts for UI forms, written in **English**.
 They serve as translation keys for the frontend (via `webtyp.com/lang`).
 - **Label**: "IP address", "Active". If empty, UIs usually derive it from the `Name` ("is_active" -> "is active").
-- **Help**: Persistent instructions shown under the field ("Format: 12.345.678-9"). Never write instructions in a placeholder (placeholders only show examples and disappear).
+- **Help**: Instructions opened by the field's (i) button, under the field ("Format: 12.345.678-9"). Never write instructions in a placeholder (placeholders only show examples and disappear).
+
+### AlsoSetsField and ShownWhen
+
+What one field declares about another, in the model and nowhere else:
+
+- `AlsoSetsField: "birthdate_estimated"` — when the person commits this field, its input also sets that field. The input decides the value (it implements `input.AlsoSetter`); `form.New` fails if it does not or the name is wrong.
+- `ShownWhen: model.When{Field: "document_type", In: []string{"passport"}}` — the field is shown only while the other holds a listed value; hidden, it is emptied, not validated and travels empty.
 
 ### Exclude
 
