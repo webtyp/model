@@ -237,6 +237,34 @@ func (f Field) hasPositiveCharRules() bool {
 		f.BreakLine || f.Tab || len(f.Extra) > 0
 }
 
+// PermittedOver is the rules a control built for f enforces: base (the
+// control's own defaults) with what f declares laid on top, exactly as
+// Field.Validate applies them on the server. A declared charset REPLACES the
+// control's (the author's explicit whitelist governs); a declared Minimum,
+// Maximum, NotAllowed or StartWith replaces only itself.
+//
+//	rules := field.PermittedOver(input.Permitted)
+func (f Field) PermittedOver(base Permitted) Permitted {
+	p := base
+	if f.hasPositiveCharRules() {
+		p.Letters, p.Tilde, p.Numbers = f.Letters, f.Tilde, f.Numbers
+		p.Spaces, p.BreakLine, p.Tab, p.Extra = f.Spaces, f.BreakLine, f.Tab, f.Extra
+	}
+	if f.Minimum > 0 {
+		p.Minimum = f.Minimum
+	}
+	if f.Maximum > 0 {
+		p.Maximum = f.Maximum
+	}
+	if len(f.NotAllowed) > 0 {
+		p.NotAllowed = f.NotAllowed
+	}
+	if f.StartWith != nil {
+		p.StartWith = f.StartWith
+	}
+	return p
+}
+
 // ValidateVector checks the SHAPE of b for field f: a multiple of four bytes,
 // and exactly f.Type.Dim()*4 bytes when the kind declares a dimension. A nil or
 // empty b is accepted for a nullable field and rejected when f.NotNull.
