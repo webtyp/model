@@ -38,6 +38,12 @@ type Definition struct {
 	//
 	//	ExternalCalls: []model.ExternalCallDefinition{{Name: "charge", Mode: model.WaitForReply, MaxWaitSeconds: 10}}
 	ExternalCalls []ExternalCallDefinition
+	// ListsOnlyAfterSearch keeps the entity's list empty until the person types: a read without text returns no rows
+	// (crud) and the screen says «Type to search» (crudview). For tables too large to show whole (a patient registry).
+	// At least one field must enter text_search (crud refuses the mount otherwise).
+	//
+	//	var PatientModel = model.Definition{Name: "patient", ListsOnlyAfterSearch: true, …}
+	ListsOnlyAfterSearch bool
 }
 
 // Allower is implemented by the struct ormc generates from a Definition: what the table offers through the API.

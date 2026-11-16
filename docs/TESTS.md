@@ -105,3 +105,8 @@
 | [TestNotNull_IntStillRejectsZero](../tests/field_test.go) | IntStillRejectsZero |
 | [TestWhenZeroAlwaysHolds](../tests/when_test.go) | A zero `model.When` always shows its field. |
 | [TestWhenHoldsOnlyForListedValues](../tests/when_test.go) | `model.When` shows the field only for the listed values of the other field; any other value, including empty, hides it. |
+| [TestTextSearch_FieldsSkipKeyServerOnlyAndPlainKinds](../tests/text_search_test.go) | Only searchable kinds that are neither key nor server-only enter text_search. |
+| [TestTextSearch_ValueJoinsFieldsInSearchForm](../tests/text_search_test.go) | The row's text_search joins its fields in search form. |
+| [TestTextSearch_DigitsOfTwoFieldsNeverMerge](../tests/text_search_test.go) | Digits of two fields never merge into one word. |
+| [TestTextSearch_EmptyFieldsAreSkipped](../tests/text_search_test.go) | Empty fields add nothing. |
+| [TestTextSearch_NoValuesIsEmpty](../tests/text_search_test.go) | No values give an empty text_search. |
