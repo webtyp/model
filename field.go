@@ -146,7 +146,9 @@ type Field struct {
 	//
 	// Example: {Name: "balance", Type: model.Int(), ServerOnly: true}
 	ServerOnly bool
-	Permitted  // embedded: validation rules (characters, min/max)
+	// HiddenFromRecordOwner hides internal fields (notes, active flags) when the caller uses the module in SeesOwnRecords.
+	HiddenFromRecordOwner bool
+	Permitted             // embedded: validation rules (characters, min/max)
 }
 
 // IsPK returns true if the field is a Primary Key.

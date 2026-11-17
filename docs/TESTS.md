@@ -110,3 +110,7 @@
 | [TestTextSearch_DigitsOfTwoFieldsNeverMerge](../tests/text_search_test.go) | Digits of two fields never merge into one word. |
 | [TestTextSearch_EmptyFieldsAreSkipped](../tests/text_search_test.go) | Empty fields add nothing. |
 | [TestTextSearch_NoValuesIsEmpty](../tests/text_search_test.go) | No values give an empty text_search. |
+| [TestConfigurable_AnyIndustryReturnsFreshSlice](../tests/configurable_test.go) | AnyIndustry returns a fresh slice with all four industries. |
+| [TestConfigurable_SupportsIndustry](../tests/configurable_test.go) | SupportsIndustry checks whether a module supports an industry. |
+| [TestConfigurable_IconForIndustryFallsBackToDefault](../tests/configurable_test.go) | IconForIndustry returns the override or falls back to default Icon. |
+| [TestConfigurable_RoleUseForAppliesOverride](../tests/configurable_test.go) | Role.UseFor returns the module override or the role's default use. |
