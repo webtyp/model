@@ -14,9 +14,12 @@ const (
 	ErrorNotFound
 	// ErrorConflict: it cannot be done in the current state (duplicate, in use).
 	ErrorConflict
+	// ErrorUnreachable: the other side did not answer (no network, the server down or overloaded); the caller says
+	// so instead of treating it as a refusal.
+	ErrorUnreachable
 )
 
-// String renders the kind as a word: "internal", "invalid", "not found", "conflict".
+// String renders the kind as a word: "internal", "invalid", "not found", "conflict", "unreachable".
 func (k ErrorKind) String() string {
 	switch k {
 	case ErrorInvalid:
@@ -25,6 +28,8 @@ func (k ErrorKind) String() string {
 		return "not found"
 	case ErrorConflict:
 		return "conflict"
+	case ErrorUnreachable:
+		return "unreachable"
 	default:
 		return "internal"
 	}
