@@ -3,10 +3,6 @@ package model_test
 import . "webtyp.com/model"
 import "testing"
 
-type fakeModule struct{ name string }
-
-func (f fakeModule) ModelName() string { return f.name }
-
 const (
 	resCatalog Resource = "service_catalog"
 	resInvoice Resource = "invoices"

@@ -10,6 +10,7 @@ type Item struct {
 	Label       string // primary text (the field marked ItemLabel)
 	Description string // secondary text (the fields marked ItemDescription, joined with JoinItem)
 	Badge       string // leading badge (the field marked ItemBadge); a date/time field is seconds since 1970, as text
+	Tone        string // optional categorical colour tone name (webtyp.com/color.Tone) for visual differentiation
 }
 
 // Itemizer is a record that can be shown as a list entry. ormc implements it.
